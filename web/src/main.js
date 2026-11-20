@@ -31,7 +31,7 @@ const simStatus=document.querySelector('#sim-status');
 let simFrame=0;
 
 function indexPin(){
-  return environmentPass.scene?.getObjectByName('PRINT tilt index pin');
+  return environmentPass.scene?.getObjectByName('PRINT_tilt_index_pin');
 }
 function stopSimulation(){
   cancelAnimationFrame(simFrame);
