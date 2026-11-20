@@ -28,7 +28,7 @@ def displacement(name):
     if name.startswith('M5Stack Tab5'):return (0,0,40)
     if name.startswith(('Top flat decal','Flush cyan pinstripe')):return (0,0,70)
     if name.startswith('PRINT_USB_bridge'):return (0,0,13)
-    if name.startswith('PRINT_TPU'):return (0,0,-12)
+    if name.startswith('PRINT_PLA'):return (0,0,-12)
     if name=='PRINT_light_front_diffuser' or name.startswith(('VISUAL_front_mask','VISUAL_NULL_CITY_wordmark','VISUAL_front_slash')):return (0,-22,0)
     if name=='PRINT_light_left_diffuser':return (-22,0,0)
     if name=='PRINT_light_right_diffuser':return (22,0,0)
@@ -79,7 +79,7 @@ doc['animations']=[merged]
 for scene_doc in doc['scenes']:
     index=len(doc['nodes']);doc['nodes'].append({'name':'NULL_CITY_meters','scale':[.001,.001,.001],'children':scene_doc['nodes']})
     scene_doc['nodes']=[index]
-# Milk-white diffuser at rest; the separate pink emissive channel represents LEDs.
+# Milk-white diffuser at rest; the separate RGB emissive channel represents LEDs.
 for material in doc.get('materials',[]):
     if material.get('name')=='Backlit translucent PLA illustration':
         material['pbrMetallicRoughness']['baseColorFactor']=[.82,.84,.88,1]

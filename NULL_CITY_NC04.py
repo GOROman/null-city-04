@@ -86,6 +86,8 @@ def add_shoulders(frame, white):
         bevel.segments = 4
         boolean(frame, shoulder, "UNION")
         bore(frame, 1.7, 11, (x, *PIVOT[1:]))
+    feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (9.5, 89, 32), white, bevel=2)
+    boolean(frame, feedthrough, "DIFFERENCE")
     frame.name = "NC04 upper frame • integral white cradle shoulders"
 
 
@@ -130,6 +132,9 @@ def add_tab5(pivot, case, glass):
     tab.parent = pivot
     # The manufacturer STL models the structure. The thin glass cap closes its open front.
     box("Tab5 front glass cover", (127, 0.32, 79), (0, -6, 46.5), glass, tab, bevel=0.13)
+    # Envelope located from the manufacturer's rear photograph, for connector access checks.
+    connector = material("M5-Bus plug envelope", (0.045, 0.20, 0.24))
+    box("M5-Bus GPIO plug envelope", (9, 10, 38), (9.5, 11.1, 46.5), connector, tab)
 
 
 def set_color(material_name, color, emission=False):
@@ -218,6 +223,10 @@ def main():
     add_flat_graphics(ink, accent)
     expose_led_openings()
     add_shoulders(bpy.data.objects["PRINT_02_upper_frame"], white)
+    white.name = "NC-04 white PLA"
+    for part in bpy.context.scene.objects:
+        if part.name.startswith("PRINT_TPU"):
+            part.name = part.name.replace("PRINT_TPU", "PRINT_PLA", 1)
 
     pivot = bpy.data.objects.new("Tab5 removable cradle • tilt pivot", None)
     bpy.context.collection.objects.link(pivot)

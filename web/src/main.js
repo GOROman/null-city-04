@@ -189,7 +189,7 @@ viewer.addEventListener('load',()=>{
   const ledStrengths={'Backlit translucent PLA illustration':5,'Magenta lighting illustration':5,'Indicator LED RGB':4,'Cool white lettering':3};
   for(const {material} of emissive){if(ledStrengths[material.name])material.setEmissiveStrength(ledStrengths[material.name]);}
   selectLEDMeshes();
-  caseMaterials=viewer.model.materials.filter(material=>material.name==='Pearl white PETG').map(material=>({material,color:[...material.pbrMetallicRoughness.baseColorFactor],alpha:material.getAlphaMode(),doubleSided:material.getDoubleSided()}));
+  caseMaterials=viewer.model.materials.filter(material=>material.name==='NC-04 white PLA').map(material=>({material,color:[...material.pbrMetallicRoughness.baseColorFactor],alpha:material.getAlphaMode(),doubleSided:material.getDoubleSided()}));
   viewer.animationName='Assembly';viewer.pause();viewer.currentTime=0;reset();
   arcade?.dispose();arcade=new Arcade(viewer,composer,environmentPass,reportInput);viewer.arcade=arcade;
   setRGB();setLights();selectLEDMeshes();

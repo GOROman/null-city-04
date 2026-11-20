@@ -35,7 +35,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await page.locator('#led').uncheck({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
   await page.locator('#transparent').check({force:true});
-  expect(await page.locator('#viewer').evaluate(v=>v.model.materials.find(m=>m.name==='Pearl white PETG').pbrMetallicRoughness.baseColorFactor[3])).toBeCloseTo(.18,2);
+  expect(await page.locator('#viewer').evaluate(v=>v.model.materials.find(m=>m.name==='NC-04 white PLA').pbrMetallicRoughness.baseColorFactor[3])).toBeCloseTo(.18,2);
   await page.locator('#exposure').evaluate(e=>{e.value='1';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#exposure-value')).toHaveText('+1.0 EV');
   expect(await page.locator('#viewer').evaluate(v=>v.exposure)).toBeCloseTo(1.6,4);
