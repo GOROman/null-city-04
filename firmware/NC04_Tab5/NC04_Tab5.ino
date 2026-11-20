@@ -3,6 +3,8 @@
 #include <esp32-hal-tinyusb.h>
 #include <BLE.h>
 #include <M5Unified.h>
+#include <Preferences.h>
+#include <esp_random.h>
 #include <USB.h>
 #include <USBHID.h>
 #include "Vf2Controls.h"
@@ -14,7 +16,7 @@
 
 namespace {
 using namespace vf2;
-constexpr char deviceName[] = "NC-04 VF2 Stick";
+constexpr char deviceName[] = "NULL CITY NC-04";
 constexpr const char *buttonNames[] = {"G", "P", "K", "COIN", "1P", "2P"};
 static_assert(sizeof(buttonNames) / sizeof(buttonNames[0]) == Count - Guard);
 static_assert(sizeof(pins) / sizeof(pins[0]) == Player2);
@@ -88,19 +90,49 @@ private:
 UsbJoystick usb;
 BLEServer bleServer;
 BLECharacteristic bleInput;
+std::atomic<bool> bleEncrypted{false};
 Debouncer contacts;
 Macro macro;
 
+void setBleIdentity() {
+    // Keep the advertised name associated with a stable address across updates.
+    Preferences settings;
+    if (!settings.begin("nc04-ble", false)) return;
+    uint8_t address[6];
+    if (settings.getBytes("identity", address, sizeof(address)) != sizeof(address)) {
+        esp_fill_random(address, sizeof(address));
+        address[5] = (address[5] & 0x3f) | 0xc0;  // Static random BLE address.
+        if (settings.putBytes("identity", address, sizeof(address)) != sizeof(address)) return;
+    }
+    if (BLE.setOwnAddress(BTAddress(address, BTAddress::Random))) {
+        BLE.setOwnAddressType(BTAddress::Random);
+    }
+}
+
 void startBle() {
     if (!BLE.begin(deviceName)) return;
+    setBleIdentity();
     auto security = BLE.getSecurity();
+    security.setIOCapability(BLEIOCapability::NoInputNoOutput);
     security.setAuthenticationMode(true, false, true);
+    security.onAuthenticationComplete([](const BLEConnInfo &peer, bool success) {
+        bleEncrypted.store(success && peer.isEncrypted());
+    });
     bleServer = BLE.createServer();
     if (!bleServer) return;
+    bleServer.onConnect([](BLEServer &, const BLEConnInfo &peer) {
+        bleEncrypted.store(peer.isEncrypted());
+        if (!peer.isEncrypted()) BLE.getSecurity().startSecurity(peer);
+    });
+    bleServer.onDisconnect([](BLEServer &, const BLEConnInfo &, uint8_t) {
+        bleEncrypted.store(false);
+    });
     BLEHIDDevice hid(bleServer);
     hid.manufacturer("NULL CITY");
+    hid.pnp(0x02, USB.VID(), USB.PID(), 0x0100);
     hid.hidInfo(0, 0x02);
     hid.reportMap(reportMap, sizeof(reportMap));
+    hid.setBatteryLevel(constrain(M5.Power.getBatteryLevel(), 0, 100));
     bleInput = hid.inputReport(reportId);
     const Report neutral{};
     bleInput.setValue(neutral);
@@ -108,6 +140,7 @@ void startBle() {
     bleServer.start();
     auto advertising = BLE.getAdvertising();
     advertising.setName(deviceName);
+    advertising.setScanResponse(true);
     advertising.setAppearance(BLE_APPEARANCE_HID_JOYSTICK);
     advertising.start();
 }
@@ -143,10 +176,13 @@ struct ControlsLayout {
         const int columnWidth = (width - left) / 3;
         const int rowHeight = monitorHeight() / 2;
         const bool system = index >= 3;
-        const int actionRadius = min(columnWidth, rowHeight) * 38 / 100;
+        const int diameterLimit = min(columnWidth, rowHeight);
+        // The cabinet's three action centers rise from G to P and settle at K.
+        constexpr int actionCenterHeight[] = {152, 134, 142};
+        const int heightPercent = system ? 38 : actionCenterHeight[index];
         return {left + (index % 3) * columnWidth + columnWidth / 2,
-                monitorTop() + rowHeight / 2 + (system ? 0 : rowHeight),
-                system ? actionRadius * 25 / 30 : actionRadius};
+                monitorTop() + rowHeight * heightPercent / 100,
+                diameterLimit * (system ? 31 : 46) / 100};
     }
 };
 
@@ -243,6 +279,16 @@ void drawStick(const ControlsLayout &layout, StickPosition old, StickPosition ne
     if (!first) screen.clearClipRect();
 }
 
+void drawBluetoothIcon(int x, int y) {
+    auto &screen = M5.Display;
+    constexpr uint16_t color = 0x9fff;
+    screen.drawFastVLine(x, y - 13, 27, color);
+    screen.drawLine(x, y - 13, x + 8, y - 6, color);
+    screen.drawLine(x + 8, y - 6, x - 8, y + 7, color);
+    screen.drawLine(x - 8, y - 7, x + 8, y + 6, color);
+    screen.drawLine(x + 8, y + 6, x, y + 13, color);
+}
+
 void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, bool first) {
     auto &screen = M5.Display;
     const ControlsLayout layout{screen.width(), screen.height()};
@@ -266,6 +312,7 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         screen.setFont(&bodyFont);
         screen.setTextColor(0x7dd9, 0x0842);
         screen.drawString(status, 18, h * 14 / 100);
+        if (bleConnected) drawBluetoothIcon(w - 34, h * 14 / 100 + screen.fontHeight() / 2);
     }
 
     for (uint8_t i = Guard; i < Count; ++i) {
@@ -321,7 +368,7 @@ void loop() {
     } else if (!usbReady) {
         usbWasReady = false;
     }
-    const bool bleConnected = bleInput && bleServer.getConnectedCount() > 0;
+    const bool bleConnected = bleInput && bleEncrypted.load();
     if (bleConnected && (report.differs(lastBle) || now - lastBleReport >= 250)) {
         if (bleInput.notify(reinterpret_cast<const uint8_t *>(&report), sizeof(report))) {
             bleInput.setValue(report);

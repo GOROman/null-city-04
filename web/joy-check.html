@@ -36,9 +36,11 @@
   section { background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
   .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .cell { display: grid; place-items: center; text-align: center; min-height: 50px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
-  #buttons { justify-items: center; gap: 12px; }
-  #buttons button { width: min(100%, 90px); aspect-ratio: 1; min-height: 0; padding: 4px; border-radius: 50%; font-size: clamp(.8rem, 3vw, 1rem); grid-row: 2; }
-  #buttons .system { width: min(83.333%, 75px); grid-row: 1; }
+  #buttons { justify-items: center; gap: 28px 10px; }
+  #buttons button { width: min(100%, 126px); aspect-ratio: 1; min-height: 0; padding: 4px; border-radius: 50%; font-size: clamp(.8rem, 3vw, 1rem); grid-row: 2; }
+  #buttons .system { width: min(74%, 75px); grid-row: 1; }
+  #buttons button:nth-child(2) { translate: 0 -18%; }
+  #buttons button:nth-child(3) { translate: 0 -10%; }
   #buttons button:nth-child(3n+1) { grid-column: 1; }
   #buttons button:nth-child(3n+2) { grid-column: 2; }
   #buttons button:nth-child(3n) { grid-column: 3; }
@@ -236,7 +238,7 @@
     if (device?.opened) {
       controllers.hidden = true;
       [x, y, mask] = directInput;
-      source = message || `${device.productName || 'NC-04 VF2 Stick'} · USB HID`;
+      source = message || `${device.productName || 'NULL CITY NC-04'} · USB HID`;
     } else {
       const pads = [...(navigator.getGamepads?.() ?? [])].filter(pad => pad?.connected);
       selectControllers(pads);

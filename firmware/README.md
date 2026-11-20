@@ -25,7 +25,7 @@ Tab5背面の30ピンM5-Busから、レバー4方向とG・P・K・COIN・1Pを�
 
 ## 操作
 
-- 画面左の円をタッチしてドラッグすると、物理レバーと同じ8方向を入力できます。中心にはデッドゾーンがあり、指を離すとニュートラルに戻ります。画面右の6ボタンをスティックと同時にタッチ操作できます。上段のCOIN・1P・2Pは下段のG・P・Kに対して直径25:30です。2Pはタッチ専用でHIDボタン6を送ります。
+- 画面左の円をタッチしてドラッグすると、物理レバーと同じ8方向を入力できます。中心にはデッドゾーンがあり、指を離すとニュートラルに戻ります。画面右の6ボタンをスティックと同時にタッチ操作できます。上段に小型のCOIN・1P・2P、下段に大型のG・P・Kを配置しています。G・P・Kは筐体パネルと同じくPが最も上で、K、Gの順に下がります。2Pはタッチ専用でHIDボタン6を送ります。
 - 画面は60 Hz周期で、HIDへ送るレバー8方向＋ニュートラルと6つのボタンを表示します。マクロの出力も表示に反映します。ノブは表示側だけ滑らかに追従します。
 - レバーは上下・左右の反対方向を同時に押すと、その軸を中央に戻します。斜めとG・P・Kの同時押しに対応します。
 - **RECORD** を押してレバーとG・P・Kを操作し、**STOP REC** で停止します。**PLAY** で1回再生、**STOP PLAY** で中止します。最大64区間、各区間20 ms〜5秒で、1件をRAMに保持します。COIN・1P・2Pは常に手動入力です。
@@ -44,13 +44,13 @@ arduino-cli compile \
   firmware/NC04_Tab5
 ```
 
-Tab5のUSB-Cをデータケーブルで接続し、Reset/Bootを緑LEDが点滅するまで押してダウンロードモードに入ります。`arduino-cli board list` でポートを確認し、ビルド時と同じFQBNを使って `arduino-cli upload -p <PORT> --fqbn <FQBN> firmware/NC04_Tab5` を実行します。書き込むのはP4側です。BLEはTab5内蔵C6のESP-Hosted HCIを使います。ペアリング名は **NC-04 VF2 Stick** です。
+Tab5のUSB-Cをデータケーブルで接続し、Reset/Bootを緑LEDが点滅するまで押してダウンロードモードに入ります。`arduino-cli board list` でポートを確認し、ビルド時と同じFQBNを使って `arduino-cli upload -p <PORT> --fqbn <FQBN> firmware/NC04_Tab5` を実行します。書き込むのはP4側です。BLEはTab5内蔵C6のESP-Hosted HCIを使います。ペアリング名は **NULL CITY NC-04** です。
 
 [M5Stackのダウンロードモード](https://docs.m5stack.com/en/core/Tab5#download-mode) · [EspressifのHosted BLE仕様](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ble.html)
 
 ## macOSでのUSB入力チェック
 
-リポジトリのルートで `npm --prefix web run dev` を実行し、Chromeで [USB Joy Check](http://127.0.0.1:4173/joy-check.html) を開きます。開発中はWebUIを保存するとViteがページを自動で再読み込みします。MacとTab5をUSB-Cでつなぎ、レバーかボタンを操作するとブラウザーが入力を認識します。自動認識しない場合は「USBデバイスを選択」で **NC-04 VF2 Stick** を選びます。
+リポジトリのルートで `npm --prefix web run dev` を実行し、Chromeで [USB Joy Check](http://127.0.0.1:4173/joy-check.html) を開きます。開発中はWebUIを保存するとViteがページを自動で再読み込みします。MacとTab5をUSB-Cでつなぎ、レバーかボタンを操作するとブラウザーが入力を認識します。自動認識しない場合は「USBデバイスを選択」で **NULL CITY NC-04** を選びます。
 
 Tab5画面はアンチエイリアス付きのNULL FONTを使用します。元のTTFとライセンスは [fonts/null-font](../fonts/null-font/) にあります。ビットマップを再生成するにはPillowを入れて `python firmware/build_null_font.py` を実行します。
 
