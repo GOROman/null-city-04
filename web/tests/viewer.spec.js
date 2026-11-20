@@ -48,7 +48,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect(page.locator('#sim-status')).toContainText('45.14°');
   const pinVisible=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('PRINT_tilt_index_pin').visible);
   expect(await pinVisible()).toBe(false);
-  await page.locator('#tab5-tilt').evaluate(e=>{e.value='30';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
   expect(await pinVisible()).toBe(true);
   await page.locator('#viewer').focus();
   for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
