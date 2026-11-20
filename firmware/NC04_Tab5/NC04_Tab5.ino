@@ -93,6 +93,9 @@ BLECharacteristic bleInput;
 std::atomic<bool> bleEncrypted{false};
 Debouncer contacts;
 Macro macro;
+Presets presets;
+bool facingRight = true;
+bool rapidHeld = false;
 InputLog inputLog;
 constexpr unsigned logEntriesPerPage = 7;
 unsigned logOffset = 0;
@@ -179,8 +182,14 @@ struct ControlsLayout {
     int logFooterTop() const { return height * 91 / 100; }
     int logFooterHeight() const { return height * 7 / 100; }
     int logActionWidth() const { return logWidth() / 3; }
-    int macroTop() const { return height * 76 / 100; }
-    int macroHeight() const { return height * 16 / 100; }
+    int presetTop() const { return height * 70 / 100; }
+    int presetHeight() const { return height * 12 / 100; }
+    int macroTop() const { return height * 84 / 100; }
+    int macroHeight() const { return height * 13 / 100; }
+    int presetAt(int x, int y) const {
+        if (x < 0 || x >= controlsWidth() || y < presetTop() || y >= presetTop() + presetHeight()) return -1;
+        return x * 5 / controlsWidth();
+    }
     int stickX() const { return controlsWidth() * 22 / 100; }
     int stickY() const { return monitorTop() + monitorHeight() / 2; }
     int stickRadius() const { return monitorHeight() / 2 - 6; }
@@ -213,8 +222,18 @@ void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
             logOffset = 0;
         }
         logNeedsDraw = true;
+    } else if (const int preset = layout.presetAt(x, y); preset >= 0) {
+        if (preset < 2 && !macro.isRecording()) {
+            macro.cancel();
+            presets.start(preset == 0 ? Presets::Knee : Presets::AkiraSpecial, facingRight, now);
+        } else if (preset == 3) {
+            facingRight = !facingRight;
+        } else if (preset == 4) {
+            presets.cycleRapidSpeed();
+        }
     } else if (x < layout.controlsWidth() &&
                y >= layout.macroTop() && y < layout.macroTop() + layout.macroHeight()) {
+        presets.cancel();
         if (x < layout.controlsWidth() / 2) {
             if (macro.isRecording()) macro.finish(now);
             else macro.record(now);
@@ -228,11 +247,14 @@ void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
 uint16_t touchInputs(const ControlsLayout &layout, uint32_t now) {
     static int stickId = -1;
     bool stickPresent = false;
+    rapidHeld = false;
     uint16_t inputs = 0;
     const int radius = layout.stickRadius();
     for (uint8_t i = 0; i < M5.Touch.getCount(); ++i) {
         const auto &finger = M5.Touch.getDetail(i);
         if (!finger.isPressed()) continue;
+        if (layout.presetAt(finger.base_x, finger.base_y) == 2 &&
+            layout.presetAt(finger.x, finger.y) == 2) rapidHeld = true;
         const int dx = finger.base_x - layout.stickX();
         const int dy = finger.base_y - layout.stickY();
         if (stickId < 0 && dx * dx + dy * dy <= radius * radius) stickId = finger.id;
@@ -424,7 +446,7 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         screen.drawRightString("NULL CITY NC-04", w - 18, 17);
         screen.drawFastHLine(18, h * 12 / 100, w - 36, 0x32cc);
     }
-    if (first || (changed >> 16)) {
+    if (first || (changed & 0x07ff0000)) {
         char status[70];
         snprintf(status, sizeof(status), "USB %s    BLE %s    MACRO %02u",
                  usbReady ? "ON" : "---", bleConnected ? "ON" : bleInput ? "ADV" : "ERR",
@@ -440,6 +462,19 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         if (!first && !(changed & (1u << i))) continue;
         const ButtonArea area = layout.button(i - Guard);
         drawButton(area, buttonNames[i - Guard], inputs & (1u << i));
+    }
+    if (first || (changed & (15u << 27))) {
+        const int tileWidth = layout.controlsWidth() / 5;
+        screen.setTextSize(.8f);
+        tile(0, layout.presetTop(), tileWidth, layout.presetHeight(), "DOPPO", false);
+        tile(tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), "AKIRA SPECIAL", false);
+        tile(2 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), "1000 PUNCH", rapidHeld);
+        tile(3 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(),
+             facingRight ? "FACE RIGHT" : "FACE LEFT", false);
+        char timing[18];
+        snprintf(timing, sizeof(timing), "WAIT %u MS", static_cast<unsigned>(presets.rapidWaitMs()));
+        tile(4 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), timing, false);
+        screen.setTextSize(1);
     }
     if (first || (changed & (1u << 18))) {
         tile(0, layout.macroTop(), layout.controlsWidth() / 2, layout.macroHeight(), macro.isRecording() ? "STOP REC" : "RECORD",
@@ -475,7 +510,16 @@ void loop() {
     M5.update();
     const ControlsLayout layout{M5.Display.width(), M5.Display.height()};
     const uint16_t inputs = touchInputs(layout, now) | readInputs(now);
-    const uint16_t output = macro.update(inputs, now);
+    const uint16_t rapidInput = presets.rapidSequence(rapidHeld && !macro.isRecording(), now);
+    if (rapidHeld && !macro.isRecording()) {
+        presets.cancel();
+        macro.cancel();
+    }
+    uint16_t output = presets.update(macro.update(inputs, now), now);
+    if (rapidHeld && !macro.isRecording()) {
+        constexpr uint16_t attackButtons = inputBit(Punch) | inputBit(Kick) | inputBit(Guard);
+        output = (output & ~attackButtons) | rapidInput;
+    }
     const Report report = reportFor(output);
     if (inputLog.observe(report, now)) {
         if (logOffset) {
@@ -508,9 +552,11 @@ void loop() {
                             (usbReady ? 1u << 16 : 0) | (bleConnected ? 1u << 17 : 0) |
                             (macro.isRecording() ? 1u << 18 : 0) |
                             (macro.isPlaying() ? 1u << 19 : 0) |
-                            (static_cast<uint32_t>(macro.size()) << 20);
+                            (static_cast<uint32_t>(macro.size()) << 20) |
+                            (facingRight ? 1u << 27 : 0) | (rapidHeld ? 1u << 28 : 0) |
+                            (static_cast<uint32_t>(presets.rapidSpeedIndex()) << 29);
     const uint32_t frameTime = micros();
-    if (frameTime - lastDraw >= frameIntervalUs) {
+    if (!presets.active() && frameTime - lastDraw >= frameIntervalUs) {
         const uint32_t elapsedFrames = (frameTime - lastDraw) / frameIntervalUs;
         lastDraw += elapsedFrames * frameIntervalUs;
         const bool first = lastVisual == UINT32_MAX;

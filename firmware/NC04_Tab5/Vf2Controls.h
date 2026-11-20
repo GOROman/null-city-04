@@ -47,6 +47,79 @@ constexpr uint16_t virtualDirections(int dx, int dy, int deadZone) {
     return horizontal | vertical;
 }
 
+class Presets {
+public:
+    enum Move { Knee, AkiraSpecial };
+
+    void start(Move move, bool facingRight, uint32_t now) {
+        selected = move;
+        right = facingRight;
+        index = 0;
+        since = now;
+        playing = true;
+    }
+
+    void cancel() { playing = false; }
+    bool active() const { return playing; }
+
+    uint16_t update(uint16_t inputs, uint32_t now) {
+        if (!playing) return inputs;
+        const Step *sequence = selected == Knee ? knee : akiraSpecial;
+        if (now - since >= sequence[index].duration) {
+            since = now;
+            if (!sequence[++index].duration) {
+                playing = false;
+                return inputs;
+            }
+        }
+        uint16_t move = sequence[index].inputs;
+        if (!right) {
+            const auto left = inputBit(Left), rightBit = inputBit(Right);
+            move = (move & ~(left | rightBit)) |
+                   ((move & left) ? rightBit : 0) | ((move & rightBit) ? left : 0);
+        }
+        return move | (inputs & (inputBit(Coin) | inputBit(Start) | inputBit(Player2)));
+    }
+
+    void cycleRapidSpeed() { rapidSpeed = (rapidSpeed + 1) % 3; }
+    uint8_t rapidSpeedIndex() const { return rapidSpeed; }
+    uint8_t rapidWaitMs() const { return rapidWaits[rapidSpeed].beforeGuard; }
+
+    uint16_t rapidSequence(bool held, uint32_t now) {
+        if (held && !rapidHeld) {
+            rapidSince = now;
+            rapidIndex = 0;
+        }
+        rapidHeld = held;
+        if (!held) return 0;
+        const RapidWait timing = rapidWaits[rapidSpeed];
+        const Step sequence[] = {
+            {p, 100}, {k, 35}, {0, timing.beforeGuard}, {g, 18}, {0, timing.afterGuard},
+        };
+        if (now - rapidSince >= sequence[rapidIndex].duration) {
+            rapidSince = now;
+            rapidIndex = (rapidIndex + 1) % (sizeof(sequence) / sizeof(sequence[0]));
+        }
+        return sequence[rapidIndex].inputs;
+    }
+
+private:
+    struct Step { uint16_t inputs; uint16_t duration; };
+    static constexpr auto g = inputBit(Guard), p = inputBit(Punch), k = inputBit(Kick);
+    static constexpr Step knee[] = {{g | k, 17}, {k, 50}, {0, 34}, {0, 0}};
+    static constexpr Step akiraSpecial[] = {
+        {g | p | k, 34}, {0, 17}, {inputBit(Left), 34},
+        {inputBit(Down) | inputBit(Right) | p | k, 34}, {0, 17},
+        {inputBit(Left) | p, 34}, {0, 34}, {0, 0},
+    };
+    Move selected = Knee;
+    bool playing = false, right = true, rapidHeld = false;
+    struct RapidWait { uint8_t beforeGuard; uint16_t afterGuard; };
+    static constexpr RapidWait rapidWaits[] = {{52, 175}, {70, 80}, {105, 480}};
+    uint8_t index = 0, rapidIndex = 0, rapidSpeed = 1;
+    uint32_t since = 0, rapidSince = 0;
+};
+
 class InputLog {
 public:
     struct Entry {
