@@ -1,7 +1,7 @@
 {
   "name": "NULL CITY NC-04",
   "license": "CC-BY-4.0",
-  "geometry_count": 114,
+  "geometry_count": 112,
   "print_part_count": 21,
   "dimensions_mm": [
     300,
@@ -9,8 +9,8 @@
     55
   ],
   "inputs": {
-    "NULL_CITY_NC04.blend": "1e57a612146917f2019266e133a68f194221e258bb6e72d000814217818c6ee0",
-    "NULL_CITY_NC04.py": "6d30a1101af12e9c0b165f954d3b58714f09f9b4fea6c1e9e046bd8a330e48ec",
+    "NULL_CITY_NC04.blend": "1e70341aeecc845701ed0378088bbae47561d1831a2ba1754f8d73fb4b6b10bd",
+    "NULL_CITY_NC04.py": "206c5ed2be5908cccf603b82be5d8dcb74c2279e1bbfda16b6e66ceae7b9d529",
     "artwork/lighting_layout.json": "0be694d524caa767faf19912489ff387aecfe88fe896315d2ef1fb1b67560e17",
     "artwork/control_layout.json": "8fbc2b614be24fea58ebcf4d9a7e2862026e5631faf558d88af0915e6eeb7e8d",
     "artwork/tab5-display.png": "ae7ee54a316d17a22123ba3cf4279cbdae897d6ea8b9072b5eff0c2603d72660",
@@ -22,7 +22,7 @@
     "scripts/usb_relief.py": "f8fb0e313ccf04b3f41bc25d343d448f8ddb46cfd6be25ce206525b0e723126d",
     "docs/references/tab5/Tab5.stl": "5e8e6398d85e4183af9040e9b12b1462fe74629b0ee6065581c7c897a8ba1a74",
     "docs/references/tab5/Tab5-rear.jpg": "3592a3be9dabdee2771701722ca59033964b11bad0b09908e191893c423344e2",
-    "scripts/export_web_model.py": "c155e8e1b7bf995cf24ee1c2b1a7352b76cce7b7cb741c4633d973112fd0748e"
+    "scripts/export_web_model.py": "cd668f7b547e4985b23e9cae74c13f9a87d8f5f9309bdfdf3a4af06400f52234"
   },
-  "glb_sha256": "9823fd6f370838fe09a64c57a5cca220de17c2494a5084a7c90ee309e7db5488"
+  "glb_sha256": "f48b7ec173f1ce402cd9f8f75f99906e360e90a04076b2768b93bf32bd3d9066"
 }

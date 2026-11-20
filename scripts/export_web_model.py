@@ -24,8 +24,10 @@ def displacement(name):
     if name.startswith('NC04 upper frame'):return (0,0,32)
     if name=='Tab5TiltPivot':return (0,0,115)
     if name=='GpioCableEntry':return (0,0,32)
-    if name.startswith(('M3 pivot screw','M3 brass insert')):
-        return (34 if bpy.data.objects[name].location.x>0 else -34,0,32 if name.startswith('M3 pivot screw') else 0)
+    if name.startswith('PRINT hinge snap pin'):
+        return (35 if bpy.data.objects[name].location.x>0 else -35,0,45)
+    if name.startswith('PRINT hinge C-clip'):
+        return (0,0,70)
     if name.startswith('M5Stack Tab5'):return (0,0,52)
     if name.startswith('Tab5 snap-in guide'):return (0,0,25)
     if name.startswith(('GPIO 2x5 plug', 'GPIO header pin', 'Ext.Port1 plug tail')):return (0,7,-15)

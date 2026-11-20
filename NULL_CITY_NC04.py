@@ -1,7 +1,7 @@
 """Build the NC-04 Tab5 dock and enclosure study from the NC-03 assembly."""
 
 import json
-from math import copysign, radians, sqrt, tan
+from math import copysign, cos, pi, radians, sin, sqrt, tan
 import struct
 import sys
 from pathlib import Path
@@ -242,14 +242,14 @@ def add_shoulders(frame, white):
                (73, 73), (71, 70), (76, 64), (82, 58), (87, 53), (90, 50)]
     to_world = Matrix(((0, 0, 1, 0), (1, 0, 0, 0),
                        (0, 1, 0, 0), (0, 0, 0, 1)))
-    for x in (-74, 74):
+    for x in (-76, 76):
         shoulder = prism("Integrated shoulder", profile, x - 4.5, x + 4.5, white)
         shoulder.data.transform(to_world)
         bevel = shoulder.modifiers.new("Molded edge radius", "BEVEL")
         bevel.width = 1.4
         bevel.segments = 4
         boolean(frame, shoulder, "UNION")
-        bore(frame, 1.7, 11, (x, *PIVOT[1:]))
+        bore(frame, 3.2, 11, (x, *PIVOT[1:]))
     feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
     boolean(frame, feedthrough, "DIFFERENCE")
     frame.name = "NC04 upper frame • integral white cradle shoulders"
@@ -348,6 +348,72 @@ def add_deck_hardware(tray, upper, panel, hardware, brass):
             head = cylinder("Deck M3x40 screw head", 3.25, 2, (x, y, top + 1.1), axis="Z")
             bore(head, 1.25, 1.2, (x, y, top + 2), axis="Z")
             head.data.materials.append(hardware)
+
+
+def make_hinge_pin(finish):
+    # Profile runs from the outside head toward the end that enters the cradle.
+    profile = [(0, 4.2), (.3, 4.4), (1.7, 4.4), (1.7, 3), (10.2, 3),
+               (10.85, 2.35), (13.05, 2.35), (13.70, 3), (20.2, 3), (20.6, 2.6)]
+    segments = 48
+    vertices = [(radius*cos(2*pi*i/segments), radius*sin(2*pi*i/segments), height)
+                for height,radius in profile for i in range(segments)]
+    faces = [tuple(reversed(range(segments)))]
+    for layer in range(len(profile)-1):
+        offset=layer*segments
+        for i in range(segments):
+            start=offset+i
+            end=offset+(i+1)%segments
+            faces.append((start,end,end+segments,start+segments))
+    faces.append(tuple(range(len(vertices)-segments,len(vertices))))
+    return hinge_mesh("PRINT hinge snap pin", vertices, faces, finish)
+
+
+def make_hinge_clip(finish):
+    segments=44
+    start=radians(55)
+    vertices=[]
+    for step in range(segments+1):
+        angle=start+(2*pi-2*start)*step/segments
+        for radius,z in ((2.5,0),(4.6,0),(4.6,2.0),(2.5,2.0)):
+            vertices.append((radius*cos(angle),radius*sin(angle),z))
+    faces=[(3,2,1,0)]
+    for step in range(segments):
+        offset=step*4
+        for i in range(4):
+            a=offset+i
+            b=offset+(i+1)%4
+            faces.append((a,b,b+4,a+4))
+    faces.append(tuple(range(len(vertices)-4,len(vertices))))
+    return hinge_mesh("PRINT hinge C-clip", vertices, faces, finish)
+
+
+def hinge_mesh(name, vertices, faces, finish):
+    mesh=bpy.data.meshes.new(name)
+    mesh.from_pydata(vertices,[],faces)
+    solid=bmesh.new()
+    solid.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(solid,faces=list(solid.faces))
+    solid.to_mesh(mesh)
+    solid.free()
+    part=bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(part)
+    mesh.materials.append(finish)
+    return part
+
+
+def add_snap_hinge(cradle, pivot, finish):
+    parts=[]
+    for side in (-1,1):
+        bore(cradle,3.2,8,(side*65.45,0,0),pivot)
+        pin=make_hinge_pin(finish)
+        pin.location=(side*82.2,*PIVOT[1:])
+        pin.rotation_euler.y=radians(-90*side)
+        clip=make_hinge_clip(finish)
+        # The opening faces down for installation from above after the pin is seated.
+        clip.rotation_euler=Matrix(((0,0,side),(0,side,0),(-1,0,0))).to_euler()
+        clip.location=(side*69.25,*PIVOT[1:])
+        parts.append((pin,clip))
+    return parts[-1]
 
 
 def add_snap_guides(cradle, pivot, white):
@@ -585,15 +651,7 @@ def main():
         )
         for rail in rails:
             boolean(cradle, rail, "UNION")
-        bore(cradle, 2.0, 6, (side * 66.5, 0, 0), pivot)
-        insert = cylinder("M3 brass insert • reference", 2.25, 4.5, (side * 66.5, 0, 0), pivot)
-        bore(insert, 1.25, 6, (side * 66.5, 0, 0), pivot)
-        insert.data.materials.append(brass)
-        screw = cylinder("M3 pivot screw shank", 1.5, 14, (side * 71.5, *PIVOT[1:]))
-        screw.data.materials.append(hardware)
-        head = cylinder("M3 pivot screw head", 2.75, 2.5, (side * 79.75, *PIVOT[1:]))
-        head.data.materials.append(hardware)
-
+    hinge_pin, hinge_clip = add_snap_hinge(cradle, pivot, white)
     guides = add_snap_guides(cradle, pivot, white)
     add_gpio_port(cradle, pivot, white, brass)
     harness = material("GPIO flat ribbon jacket", (0.19, 0.22, 0.25))
@@ -612,6 +670,8 @@ def main():
     ):
         export_print_part(part, filename)
     export_print_part(guides[1], "NC04_05_tab5_snap_guide.stl", Matrix.Rotation(radians(90), 4, "Y"))
+    export_print_part(hinge_pin, "NC04_07_hinge_snap_pin.stl")
+    export_print_part(hinge_clip, "NC04_08_hinge_c_clip.stl")
     for diffuser in diffusers:
         side = "left" if "left" in diffuser.name else "right"
         export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")
