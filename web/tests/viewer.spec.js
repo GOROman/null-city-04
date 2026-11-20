@@ -244,6 +244,8 @@ test('RGB animation, spring controls, background color and SSAO tuning',async({p
   await expect(page.locator('#run-macro')).toBeEnabled();
   await page.getByRole('button',{name:'視点と表示設定をリセット'}).click();
   await expect(page.locator('.stage')).toHaveAttribute('data-play','false');
-  await expect(page.locator('#background-color')).toHaveValue('#e9e9e7');
+  await expect(page.locator('#background-color')).toHaveValue('#131a35');
+  await expect(page.locator('#ssao-strength')).toHaveValue('1.4');
+  await expect(page.locator('#ssao-strength-value')).toHaveText('1.4');
   expect(errors).toEqual([]);
 });

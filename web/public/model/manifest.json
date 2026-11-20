@@ -21,7 +21,7 @@
     "scripts/panel_features.py": "097171c0c3277786ac53e27deeb05eb4efda1017911c29cca098501a44ceab79",
     "docs/references/tab5/Tab5.stl": "5e8e6398d85e4183af9040e9b12b1462fe74629b0ee6065581c7c897a8ba1a74",
     "docs/references/tab5/Tab5-rear.jpg": "3592a3be9dabdee2771701722ca59033964b11bad0b09908e191893c423344e2",
-    "scripts/export_web_model.py": "88acee89a6ed1f546acc1a78bde4cdc720075b58b603aa5e76a61865ac3d8104"
+    "scripts/export_web_model.py": "1fc6525f85ef43ef92f75a1c46c69244152d892a7fd885a9358d87bd02cdeb08"
   },
-  "glb_sha256": "c7d11d12537da24292fdcdaee458c454df4701ea1a5edd14dd9aeabf90e7fb99"
+  "glb_sha256": "299cc63e43c1e967b9ecafe88cfbdfb743cb0c9c7a344d33a585252c21d3664c"
 }

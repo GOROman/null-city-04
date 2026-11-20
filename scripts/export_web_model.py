@@ -17,6 +17,12 @@ pivot=next(o for o in scene.objects if o.name.startswith("Tab5 cradle • fixed 
 pivot.animation_data_clear()
 pivot.name="Tab5CradleMount"
 scene.frame_start=1;scene.frame_end=25
+
+# Lift the render-only diffuser faces clear of the flush side wall.
+for side, sign in (("left", -1), ("right", 1)):
+    lens = bpy.data.objects[f"PRINT_light_{side}_diffuser"]
+    lens.location.x += sign * .15
+
 geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and not o.name.startswith(('STUDIO_floor',))]
 print_part_count=sum(o.name.startswith(('PRINT_', 'NC04 upper frame', 'White moving cradle')) for o in geometry)
 
