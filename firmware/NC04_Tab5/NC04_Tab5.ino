@@ -93,6 +93,10 @@ BLECharacteristic bleInput;
 std::atomic<bool> bleEncrypted{false};
 Debouncer contacts;
 Macro macro;
+InputLog inputLog;
+constexpr unsigned logEntriesPerPage = 7;
+unsigned logOffset = 0;
+bool logNeedsDraw = true;
 
 void setBleIdentity() {
     // Keep the advertised name associated with a stable address across updates.
@@ -165,15 +169,25 @@ struct ButtonArea {
 struct ControlsLayout {
     int width, height;
 
+    int controlsWidth() const { return logLeft() - 12; }
     int monitorTop() const { return height * 22 / 100; }
     int monitorHeight() const { return height * 44 / 100; }
-    int stickX() const { return width * 23 / 100; }
+    int logLeft() const { return width - logWidth() - 18; }
+    int logWidth() const { return (width - width * 67 / 100 - 30) * 2 / 3; }
+    int logTop() const { return monitorTop(); }
+    int logHeaderHeight() const { return height * 6 / 100; }
+    int logFooterTop() const { return height * 91 / 100; }
+    int logFooterHeight() const { return height * 7 / 100; }
+    int logActionWidth() const { return logWidth() / 3; }
+    int macroTop() const { return height * 76 / 100; }
+    int macroHeight() const { return height * 16 / 100; }
+    int stickX() const { return controlsWidth() * 22 / 100; }
     int stickY() const { return monitorTop() + monitorHeight() / 2; }
     int stickRadius() const { return monitorHeight() / 2 - 6; }
 
     ButtonArea button(int index) const {
-        const int left = width * 45 / 100;
-        const int columnWidth = (width - left) / 3;
+        const int left = controlsWidth() * 44 / 100;
+        const int columnWidth = (controlsWidth() - left) / 3;
         const int rowHeight = monitorHeight() / 2;
         const bool system = index >= 3;
         const int diameterLimit = min(columnWidth, rowHeight);
@@ -187,9 +201,21 @@ struct ControlsLayout {
 };
 
 void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
-    const int h = layout.height;
-    if (y >= h * 73 / 100 && y < h * 92 / 100) {
-        if (x < layout.width / 2) {
+    if (y >= layout.logFooterTop() && y < layout.logFooterTop() + layout.logFooterHeight() &&
+        x >= layout.logLeft() && x < layout.logLeft() + 3 * layout.logActionWidth()) {
+        const int action = (x - layout.logLeft()) / layout.logActionWidth();
+        if (action == 0 && logOffset + logEntriesPerPage < inputLog.size()) {
+            logOffset += logEntriesPerPage;
+        } else if (action == 1) {
+            logOffset = logOffset > logEntriesPerPage ? logOffset - logEntriesPerPage : 0;
+        } else if (action == 2) {
+            inputLog.clear();
+            logOffset = 0;
+        }
+        logNeedsDraw = true;
+    } else if (x < layout.controlsWidth() &&
+               y >= layout.macroTop() && y < layout.macroTop() + layout.macroHeight()) {
+        if (x < layout.controlsWidth() / 2) {
             if (macro.isRecording()) macro.finish(now);
             else macro.record(now);
         } else {
@@ -279,6 +305,104 @@ void drawStick(const ControlsLayout &layout, StickPosition old, StickPosition ne
     if (!first) screen.clearClipRect();
 }
 
+void drawLogArrow(int x, int y, const Report &report) {
+    auto &screen = M5.Display;
+    const int dx = report.x / 127, dy = report.y / 127;
+    if (!dx && !dy) {
+        screen.fillCircle(x, y, 4, 0x7dd9);
+        return;
+    }
+    const bool diagonal = dx && dy;
+    const int reach = diagonal ? 13 : 18;
+    const int shaft = diagonal ? 4 : 6;
+    const int wing = diagonal ? 8 : 11;
+    const int tailX = x - dx * reach, tailY = y - dy * reach;
+    const int tailLeftX = tailX - dy * shaft, tailLeftY = tailY + dx * shaft;
+    const int tailRightX = tailX + dy * shaft, tailRightY = tailY - dx * shaft;
+    const int rootLeftX = x - dy * shaft, rootLeftY = y + dx * shaft;
+    const int rootRightX = x + dy * shaft, rootRightY = y - dx * shaft;
+    constexpr uint16_t color = 0x9fff;
+    screen.fillTriangle(tailLeftX, tailLeftY, tailRightX, tailRightY, rootLeftX, rootLeftY, color);
+    screen.fillTriangle(tailRightX, tailRightY, rootLeftX, rootLeftY, rootRightX, rootRightY, color);
+    screen.fillTriangle(x + dx * reach, y + dy * reach,
+                        x - dy * wing, y + dx * wing,
+                        x + dy * wing, y - dx * wing, color);
+}
+
+void drawLogButtons(int x, int y, const InputLog::Entry &entry) {
+    auto &screen = M5.Display;
+    const uint8_t visible = entry.before.buttons | entry.after.buttons;
+    for (unsigned button = 0; button < Count - Guard; ++button) {
+        const uint8_t mask = 1u << button;
+        if (!(visible & mask)) continue;
+        const bool pressed = entry.after.buttons & mask;
+        if (pressed) screen.fillCircle(x, y, 13, 0x4efa);
+        screen.drawCircle(x, y, 13, pressed ? 0xa7ff : 0x7dd9);
+        screen.setTextSize(button == Coin - Guard ? .36f : .55f);
+        screen.setTextColor(pressed ? 0x0842 : 0xe75d, pressed ? 0x4efa : 0x10c6);
+        screen.drawCenterString(buttonNames[button], x, y - screen.fontHeight() / 2);
+        x += 29;
+    }
+}
+
+void drawInputLog(const ControlsLayout &layout) {
+    auto &screen = M5.Display;
+    const int x = layout.logLeft();
+    const int width = layout.logWidth();
+    const int top = layout.logTop();
+    const int rowsTop = top + layout.logHeaderHeight();
+    const int rowHeight = (layout.logFooterTop() - rowsTop - 4) / logEntriesPerPage;
+    screen.startWrite();
+    screen.drawFastVLine(x - 9, top, layout.logFooterTop() + layout.logFooterHeight() - top, 0x32cc);
+    screen.fillRect(x, top, width, layout.logHeaderHeight(), 0x0842);
+    screen.setFont(&bodyFont);
+    screen.setTextColor(0x7dd9, 0x0842);
+    screen.setTextSize(.85f);
+    screen.drawString("INPUT LOG", x + 2, top);
+    screen.setTextSize(.55f);
+    if (logOffset) {
+        char range[28];
+        snprintf(range, sizeof(range), "%u-%u OF %u", logOffset + 1,
+                 min<unsigned>(logOffset + logEntriesPerPage, inputLog.size()),
+                 static_cast<unsigned>(inputLog.size()));
+        screen.drawRightString(range, x + width - 5, top + layout.logHeaderHeight() / 2);
+    } else {
+        screen.drawRightString("LIVE", x + width - 5, top + 6);
+    }
+
+    for (unsigned i = 0; i < logEntriesPerPage; ++i) {
+        const int rowTop = rowsTop + i * rowHeight;
+        const int centerY = rowTop + rowHeight * 65 / 100;
+        const auto *entry = inputLog.recent(logOffset + logEntriesPerPage - 1 - i);
+        screen.fillRect(x, rowTop, width, rowHeight, 0x0842);
+        screen.fillRoundRect(x, rowTop, width, rowHeight - 4, 5, 0x10c6);
+        if (!entry) {
+            if (!inputLog.size() && i == logEntriesPerPage - 1) {
+                screen.setTextSize(.55f);
+                screen.setTextColor(0x7dd9, 0x10c6);
+                screen.drawString("WAITING FOR INPUT", x + 12, centerY - screen.fontHeight() / 2);
+            }
+            continue;
+        }
+        drawLogArrow(x + 22, centerY, entry->after);
+        drawLogButtons(x + 54, centerY, *entry);
+        char timestamp[24];
+        snprintf(timestamp, sizeof(timestamp), "%lu MS", static_cast<unsigned long>(entry->timeMs));
+        screen.setTextSize(.55f);
+        screen.setTextColor(0x7dd9, 0x10c6);
+        screen.drawRightString(timestamp, x + width - 6, rowTop + 3);
+    }
+
+    screen.setTextSize(.7f);
+    const int actionWidth = layout.logActionWidth(), footer = layout.logFooterTop();
+    const int footerHeight = layout.logFooterHeight();
+    tile(x, footer, actionWidth, footerHeight, "OLDER", logOffset + logEntriesPerPage < inputLog.size());
+    tile(x + actionWidth, footer, actionWidth, footerHeight, "NEWER", logOffset != 0);
+    tile(x + 2 * actionWidth, footer, actionWidth, footerHeight, "CLEAR", inputLog.size() != 0);
+    screen.setTextSize(1);
+    screen.endWrite();
+}
+
 void drawBluetoothIcon(int x, int y) {
     auto &screen = M5.Display;
     constexpr uint16_t color = 0x9fff;
@@ -321,11 +445,11 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         drawButton(area, buttonNames[i - Guard], inputs & (1u << i));
     }
     if (first || (changed & (1u << 18))) {
-        tile(0, h * 73 / 100, w / 2, h * 19 / 100, macro.isRecording() ? "STOP REC" : "RECORD",
+        tile(0, layout.macroTop(), layout.controlsWidth() / 2, layout.macroHeight(), macro.isRecording() ? "STOP REC" : "RECORD",
              macro.isRecording());
     }
     if (first || (changed & (1u << 19))) {
-        tile(w / 2, h * 73 / 100, w / 2, h * 19 / 100, macro.isPlaying() ? "STOP PLAY" : "PLAY",
+        tile(layout.controlsWidth() / 2, layout.macroTop(), layout.controlsWidth() / 2, layout.macroHeight(), macro.isPlaying() ? "STOP PLAY" : "PLAY",
              macro.isPlaying());
     }
     screen.endWrite();
@@ -348,7 +472,7 @@ void loop() {
     static Report lastUsb{}, lastBle{};
     static uint32_t lastBleReport = 0;
     static bool usbWasReady = false;
-    static uint32_t lastDraw = 0, lastVisual = UINT32_MAX;
+    static uint32_t lastDraw = 0, lastVisual = UINT32_MAX, lastLogDraw = 0;
     const uint32_t now = millis();
     usb.handleDownloadRequest();
     M5.update();
@@ -356,6 +480,12 @@ void loop() {
     const uint16_t inputs = touchInputs(layout, now) | readInputs(now);
     const uint16_t output = macro.update(inputs, now);
     const Report report = reportFor(output);
+    if (inputLog.observe(report, now)) {
+        if (logOffset) {
+            logOffset = min<unsigned>(logOffset + 1, inputLog.size() - 1);
+        }
+        logNeedsDraw = true;
+    }
 
     const bool usbReady = usb.connected();
     if (usbReady && (!usbWasReady || report.differs(lastUsb))) {
@@ -396,6 +526,14 @@ void loop() {
         if (visual != lastVisual) {
             draw(output, usbReady, bleConnected, visual ^ lastVisual, first);
             lastVisual = visual;
+        }
+        // Prefer idle frames without starving the log during continuous motion.
+        const uint32_t logAge = now - lastLogDraw;
+        const bool stickIdle = old.x == next.x && old.y == next.y;
+        if (logNeedsDraw && (first || (logAge >= 50 && stickIdle) || logAge >= 150)) {
+            drawInputLog(layout);
+            logNeedsDraw = false;
+            lastLogDraw = now;
         }
     }
     delay(1);

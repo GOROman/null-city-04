@@ -47,6 +47,38 @@ constexpr uint16_t virtualDirections(int dx, int dy, int deadZone) {
     return horizontal | vertical;
 }
 
+class InputLog {
+public:
+    struct Entry {
+        uint32_t timeMs;
+        Report before;
+        Report after;
+    };
+    static constexpr uint8_t capacity = 64;
+
+    bool observe(const Report &report, uint32_t now) {
+        if (!report.differs(previous)) return false;
+        entries[next] = {now, previous, report};
+        next = (next + 1) % capacity;
+        if (used < capacity) ++used;
+        previous = report;
+        return true;
+    }
+
+    void clear() { used = 0; }
+    uint8_t size() const { return used; }
+
+    const Entry *recent(unsigned offset) const {
+        if (offset >= used) return nullptr;
+        return &entries[(next + capacity - 1 - offset) % capacity];
+    }
+
+private:
+    Entry entries[capacity] = {};
+    Report previous{};
+    uint8_t next = 0, used = 0;
+};
+
 class Debouncer {
 public:
     uint16_t update(uint16_t raw, uint32_t now) {
