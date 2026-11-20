@@ -73,10 +73,32 @@ export async function buildPlate(index){
   return group;
 }
 
+export async function buildPrintLayout(selection, columns){
+  if(selection!=='all')return buildPlate(Number(selection));
+
+  const groups=await Promise.all(plates.map((_,index)=>buildPlate(index)));
+  const layout=new Group();
+  layout.name='NC04PrintLayout';
+  const rows=Math.ceil(groups.length/columns);
+  const gap=28;
+  groups.forEach((group,index)=>{
+    const row=Math.floor(index/columns);
+    const column=index%columns;
+    group.position.set((column-(columns-1)/2)*(bed.width+gap),0,
+      (row-(rows-1)/2)*(bed.depth+gap));
+    layout.add(group);
+  });
+  return layout;
+}
+
 export function disposePlate(group){
-  group.children[0].geometry.dispose();
-  group.children[0].material.dispose();
-  group.children[1].geometry.dispose();
-  group.children[1].material.dispose();
+  const beds=group.name==='NC04PrintLayout'?[...group.children]:[group];
+  for(const plate of beds){
+    const [base,grid]=plate.children;
+    base.geometry.dispose();
+    base.material.dispose();
+    grid.geometry.dispose();
+    grid.material.dispose();
+  }
   group.removeFromParent();
 }

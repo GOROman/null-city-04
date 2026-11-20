@@ -56,7 +56,14 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
   await page.locator('#assembly').evaluate(e=>{e.value='200';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#assembly-value')).toHaveText('造形配置');
-  await expect(page.locator('#print-plate option')).toHaveCount(6);
+  await expect(page.locator('#print-plate option')).toHaveCount(7);
+  await expect(page.locator('#load-status')).toHaveText('造形配置 · 全6プレート');
+  const overview=await page.locator('#viewer').evaluate(v=>{
+    const groups=v.arcade.scene.getObjectByName('NC04PrintLayout').children;
+    return {plates:groups.length,parts:groups.reduce((n,group)=>n+group.userData.partCount,0),
+      positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
+  });
+  expect(overview).toEqual({plates:6,parts:15,positions:6});
   await page.locator('#print-plate').selectOption('3');
   await expect(page.locator('#load-status')).toHaveText('造形配置 · プレート 4');
   const plate=await page.locator('#viewer').evaluate(v=>{

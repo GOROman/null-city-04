@@ -4,7 +4,7 @@ import {Arcade} from './arcade.js';
 import {EnvironmentRotationPass} from './environment-pass.js';
 import {BufferGeometry, CanvasTexture, CubicBezierCurve3, Float32BufferAttribute, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3} from 'three';
 import {drawTab5} from './tab5-display.js';
-import {buildPlate, disposePlate, plates} from './print-layout.js';
+import {buildPrintLayout, disposePlate, plates} from './print-layout.js';
 import './style.css';
 
 const viewer=document.querySelector('#viewer');
@@ -14,6 +14,7 @@ const status=document.querySelector('#load-status');
 const assembly=document.querySelector('#assembly');
 const plateControls=document.querySelector('#print-plate-controls');
 const plateSelect=document.querySelector('#print-plate');
+plateSelect.add(new Option('全6プレート','all'));
 plates.forEach(({name},index)=>plateSelect.add(new Option(`${index+1} · ${name}`,String(index))));
 let printMode=false, printPlate, plateRequest=0, assemblyVisibility=new Map();
 let printAngle=[25,35];
@@ -60,7 +61,8 @@ function frameCurrentView(){
   if(!ready)return;
   if(printMode){
     const [theta,phi]=printAngle;
-    const distance=innerWidth<700?1.25:1.16;
+    const overview=plateSelect.value==='all';
+    const distance=innerWidth<700?(overview?2.7:1.25):(overview?2.45:1.16);
     viewer.cameraOrbit=`${theta}deg ${phi}deg ${distance}m`;
     viewer.cameraTarget='0m 0m 0m';
     return;
@@ -86,13 +88,14 @@ async function renderPrintPlate(){
   if(printPlate){disposePlate(printPlate);printPlate=null;}
   status.textContent='造形プレートを読み込み中…';
   try{
-    const group=await buildPlate(Number(plateSelect.value));
+    const selection=plateSelect.value;
+    const group=await buildPrintLayout(selection,innerWidth<700?2:3);
     if(!printMode||request!==plateRequest){disposePlate(group);return;}
     const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
     if(!root){disposePlate(group);return;}
     printPlate=group;
     root.add(group);
-    status.textContent=`造形配置 · プレート ${Number(plateSelect.value)+1}`;
+    status.textContent=selection==='all'?'造形配置 · 全6プレート':`造形配置 · プレート ${Number(selection)+1}`;
     environmentPass.scene.queueShadowRender?.();
     composer.queueRender();
   }catch{
@@ -104,10 +107,10 @@ function setPrintMode(active){
   printMode=active;
   plateControls.hidden=!active;
   stage.dataset.print=String(active);
-  viewer.maxCameraOrbit=active?'auto 170deg 3m':'auto 170deg 250%';
+  viewer.maxCameraOrbit=active?'auto 170deg 4m':'auto 170deg 250%';
   const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
   if(active&&root){
-    printAngle=[25,35];
+    printAngle=plateSelect.value==='all'?[0,20]:[25,35];
     assemblyVisibility=new Map(root.children.map(child=>[child,child.visible]));
     for(const child of assemblyVisibility.keys())child.visible=false;
     renderPrintPlate();
@@ -350,7 +353,7 @@ function reset(){
   turbo.checked=false;macro.value='UIO';arcade?.setTurbo(false);refreshTab5();
   rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
   backgroundColor.value='#e9e9e7';grid.checked=true;ssaoStrength.value='1.2';ssaoRadius.value='5';
-  assembly.value='0';plateSelect.value='0';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
+  assembly.value='0';plateSelect.value='all';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
   environment.value='studio03';environmentAngle.value='90';background.checked=false;ssaoEnabled.checked=true;
   setAssembly();setTilt();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
   viewer.resetTurntableRotation(0);setEnvironment();setSSAO();setRGB();setBackgroundColor(false);
@@ -379,7 +382,12 @@ runMacroButton.addEventListener('click',runMacro);
 window.addEventListener('blur',stopMacro);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMacro();});
 assembly.addEventListener('input',setAssembly);
-plateSelect.addEventListener('change',()=>{if(printMode)renderPrintPlate();});
+plateSelect.addEventListener('change',()=>{
+  if(!printMode)return;
+  printAngle=plateSelect.value==='all'?[0,20]:[25,35];
+  frameCurrentView();
+  renderPrintPlate();
+});
 tilt.addEventListener('input',setTilt);
 exposure.addEventListener('input',setExposure);
 environmentStrength.addEventListener('input',setEnvironmentStrength);
