@@ -13,18 +13,17 @@ root=Path(__file__).resolve().parents[1]
 out=root/'web/public/model';out.mkdir(parents=True,exist_ok=True)
 scene=bpy.context.scene
 scene.render.fps=24;scene.frame_set(2)
-pivot=next(o for o in scene.objects if o.name.startswith("Tab5 removable cradle"))
+pivot=next(o for o in scene.objects if o.name.startswith("Tab5 cradle • fixed mount"))
 pivot.animation_data_clear()
-pivot.name="Tab5TiltPivot"
+pivot.name="Tab5CradleMount"
 scene.frame_start=1;scene.frame_end=25
 geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and not o.name.startswith(('STUDIO_floor', 'GPIO service loop'))]
 print_part_count=sum(o.name.startswith(('PRINT_', 'NC04 upper frame', 'White moving cradle')) for o in geometry)
 
 def displacement(name):
     if name.startswith('NC04 upper frame'):return (0,0,32)
-    if name=='Tab5TiltPivot':return (0,0,115)
+    if name=='Tab5CradleMount':return (0,0,115)
     if name=='GpioCableEntry':return (0,0,32)
-    if name.startswith(('PRINT central tilt axle', 'PRINT tilt index pin')):return (-55,0,32)
     if name.startswith('M5Stack Tab5'):return (0,0,52)
     if name.startswith(('GPIO 2x5 plug', 'GPIO header pin', 'Ext.Port1 plug tail')):return (0,7,-15)
     if name.startswith('Deck M3x40 screw'):return (0,0,104)

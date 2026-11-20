@@ -5,7 +5,6 @@ import {EnvironmentRotationPass} from './environment-pass.js';
 import {BufferGeometry, CanvasTexture, CubicBezierCurve3, Float32BufferAttribute, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3} from 'three';
 import {drawTab5} from './tab5-display.js';
 import {bed, buildPrintLayout, disposePlate, plates} from './print-layout.js';
-import simulation from './tilt-simulation.json';
 import './style.css';
 
 const viewer=document.querySelector('#viewer');
@@ -22,68 +21,6 @@ plateSelect.add(new Option('全6プレート','all'));
 plates.forEach(({name},index)=>plateSelect.add(new Option(`${index+1} · ${name}`,String(index))));
 let printMode=false, printPlate, plateRequest=0, assemblyVisibility=new Map();
 let printAngle=[25,35];
-const tilt=document.querySelector('#tab5-tilt');
-const simAngle=document.querySelector('#sim-angle');
-const simForce=document.querySelector('#sim-force');
-const simLoad=document.querySelector('#sim-load');
-const simRelease=document.querySelector('#sim-release');
-const simStatus=document.querySelector('#sim-status');
-let simFrame=0;
-
-function indexPin(){
-  return environmentPass.scene?.getObjectByName('PRINT_tilt_index_pin');
-}
-function stopSimulation(){
-  cancelAnimationFrame(simFrame);
-  simFrame=0;
-  simRelease.disabled=false;
-  simStatus.textContent='';
-  const pin=indexPin();
-  if(pin&&!printMode)pin.visible=true;
-}
-function showLoad(){
-  const result=simulation.locks.find(({angle,force})=>angle===Number(simAngle.value)&&force===Number(simForce.value));
-  simLoad.textContent=`${result.pinLoad.toFixed(1)} N · 角度差 ${result.error.toFixed(3)}°`;
-}
-function showLockedPose(){
-  assembly.value='0';
-  setAssembly();
-  tilt.value=simAngle.value;
-  setTilt();
-  showLoad();
-}
-function replayRelease(){
-  assembly.value='0';
-  setAssembly();
-  const pin=indexPin();
-  if(pin)pin.visible=false;
-  setView('rear');
-  if(matchMedia('(max-width: 700px)').matches)stage.scrollIntoView({block:'start'});
-  simRelease.disabled=true;
-  simStatus.textContent='角度ピンを外しました';
-  const samples=simulation.release;
-  const last=samples.length-1;
-  const start=performance.now();
-  let index=0;
-  function frame(now){
-    const elapsed=now-start;
-    while(index<last&&samples[index+1][0]<=elapsed)index++;
-    const [time,angle]=samples[index];
-    if(index===last){
-      applyTilt(angle,true);
-      tilt.value=angle;
-      simStatus.textContent=`自重で ${angle.toFixed(2)}° まで傾きました`;
-      simFrame=0;
-      simRelease.disabled=false;
-      return;
-    }
-    const [nextTime,nextAngle]=samples[index+1];
-    applyTilt(angle+(nextAngle-angle)*(elapsed-time)/(nextTime-time),true);
-    simFrame=requestAnimationFrame(frame);
-  }
-  applyTilt(samples[0][1],true);
-  simFrame=requestAnimationFrame(frame);
-}
 const exposure=document.querySelector('#exposure');
 const environmentStrength=document.querySelector('#environment-strength');
 const led=document.querySelector('#led');
@@ -235,7 +172,6 @@ function setPrintMode(active){
   composer.queueRender();
 }
 function setAssembly(){
-  stopSimulation();
   const value=Number(assembly.value);
   const fraction=Math.min(1,value/100);
   const printing=value>100;
@@ -248,20 +184,6 @@ function setAssembly(){
   setPrintMode(printing);
   frameCurrentView();
   updateGpioLoop();
-}
-function setTilt(){
-  stopSimulation();
-  applyTilt(Number(tilt.value));
-}
-function applyTilt(degrees, simulated=false){
-  document.querySelector('#tab5-tilt-value').value=`${simulated?degrees.toFixed(2):degrees}°`;
-  const pivot=environmentPass.scene?.getObjectByName('Tab5TiltPivot');
-  if(!pivot)return;
-  pivot.rotation.x=-degrees*Math.PI/180;
-  pivot.updateMatrixWorld(true);
-  updateGpioLoop();
-  environmentPass.scene.queueShadowRender?.();
-  composer.queueRender();
 }
 function ribbonGeometry(curve,width,thickness){
   const divisions=40;
@@ -471,9 +393,9 @@ function reset(){
   turbo.checked=false;macro.value='UIO';arcade?.setTurbo(false);refreshTab5();
   rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
   backgroundColor.value='#e9e9e7';grid.checked=true;ssaoStrength.value='1.2';ssaoRadius.value='5';
-  assembly.value='0';plateSelect.value='all';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
+  assembly.value='0';plateSelect.value='all';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
   environment.value='studio03';environmentAngle.value='90';background.checked=false;ssaoEnabled.checked=true;
-  setAssembly();setTilt();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
+  setAssembly();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
   viewer.resetTurntableRotation(0);setEnvironment();setSSAO();setRGB();setBackgroundColor(false);
 }
 
@@ -506,11 +428,6 @@ plateSelect.addEventListener('change',()=>{
   frameCurrentView();
   renderPrintPlate();
 });
-tilt.addEventListener('input',setTilt);
-simAngle.addEventListener('change',showLockedPose);
-simForce.addEventListener('change',showLoad);
-simRelease.addEventListener('click',replayRelease);
-showLoad();
 exposure.addEventListener('input',setExposure);
 environmentStrength.addEventListener('input',setEnvironmentStrength);
 led.addEventListener('change',setLights);

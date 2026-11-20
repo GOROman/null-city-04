@@ -28,7 +28,7 @@ GPIO_RIBBON_THICKNESS = 0.9
 REFERENCES = ROOT / "docs" / "references" / "tab5"
 sys.path.insert(0, str(ROOT / "scripts"))
 from panel_features import prism
-TILT_ANGLES = (15, 30, 45)
+CRADLE_ANGLE = 15
 
 
 def material(name, color):
@@ -260,19 +260,22 @@ def lighten_upper_frame(frame, white):
     boolean(frame, cutter, "DIFFERENCE")
 
 
-def add_center_fork(frame, white):
+def add_fixed_cradle_mount(frame, white):
     axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
-    profile = [(88, 38), (94.4, 38), (94.4, 61), (96, 65), (85, 75),
-               (81, 78), (76, 78), (73, 75), (74, 70), (82, 59)]
-    for x in (-18.2, 18.2):
-        cheek = prism("Central tilt fork cheek", profile, x - 2.7, x + 2.7, white)
-        cheek.data.transform(axes)
-        boolean(frame, cheek, "UNION")
-        bore(frame, 3.2, 5.8, (x, *PIVOT[1:]))
-        bore(frame, 1.65, 5.8, (x, PIVOT[1] + 12, PIVOT[2] - 14))
+    # Bonding face follows the tray underside with 0.2 mm for adhesive.
+    def seat_height(y):
+        angle = radians(CRADLE_ANGLE)
+        return PIVOT[2] - 4.7 / cos(angle) - (y - PIVOT[1]) * tan(angle)
+
+    mount = prism("Fixed cradle mount",
+                  [(89, 39), (93, 39), (93, seat_height(93)),
+                   (73, seat_height(73)), (74, 66), (89, 51)],
+                  -29, 29, white)
+    mount.data.transform(axes)
+    boolean(frame, mount, "UNION")
     feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
     boolean(frame, feedthrough, "DIFFERENCE")
-    frame.name = "NC04 upper frame • central tilt fork"
+    frame.name = "NC04 upper frame • fixed cradle mount"
 
 
 def add_tab5(pivot, case, glass, brass):
@@ -370,23 +373,6 @@ def add_deck_hardware(tray, upper, panel, hardware, brass):
             head.data.materials.append(hardware)
 
 
-def mounting_pin(name, radius, length, location, white):
-    pin = cylinder(name, radius, length, (0, 0, 0), axis="Z")
-    pin.data.materials.append(white)
-    head = cylinder("Pin head", radius + 1.6, 2, (0, 0, -length / 2 + 0.9), axis="Z")
-    boolean(pin, head, "UNION")
-    # A split tapered tip flexes through the bore and latches past the cheek.
-    bpy.ops.mesh.primitive_cone_add(vertices=48, radius1=radius + .30, radius2=radius - .25,
-                                   depth=2.2, location=(0, 0, length / 2 - .8))
-    tip = bpy.context.object
-    boolean(pin, tip, "UNION")
-    slot = box("Split tip relief", (radius * 3, .8, 6), (0, 0, length / 2 - 2.0), white, bevel=0)
-    boolean(pin, slot, "DIFFERENCE")
-    pin.rotation_euler.y = radians(90)
-    pin.location = location
-    return pin
-
-
 def cradle_tray(pivot, white):
     def chamfered_shell_box(name, size, center, width):
         part = box(name, size, center, white, pivot, bevel=0)
@@ -402,38 +388,26 @@ def cradle_tray(pivot, white):
     for side in (-1, 1):
         seat = box("Integral lower seat", (24, 16, 3.4), (side * 54, 0, 4.65), white, pivot, bevel=0)
         boolean(cradle, seat, "UNION")
-        rim = chamfered_shell_box("Integral side stop", (2.6, 15.6, 8.5), (side * 65.9, 0, 7.8), 0.55)
+        rim = chamfered_shell_box("Integral side stop", (2.6, 15.6, 6.4), (side * 65.9, 0, 6.75), 0.55)
         boolean(cradle, rim, "UNION")
-        lip = chamfered_shell_box("Integral front lip", (19, 2.0, 6), (side * 55, -7.4, 6.5), 0.55)
-        boolean(cradle, lip, "UNION")
 
+    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     # Two flat pads leave room behind the center of the tablet and accept
     # thin double-sided tape. The lower seat carries the tablet's weight.
     for x in (-45, 45):
-        pad = box("Tab5 adhesive land", (23, 3.2, 21), (x, 8.2, 14.25), white, pivot, bevel=0)
+        pad = prism("Tab5 adhesive land",
+                    [(6.6, 3.75), (7.15, 3.75), (9.8, 6.4), (9.8, 24.75), (6.6, 24.75)],
+                    x - 11.5, x + 11.5, white)
+        pad.data.transform(axes)
+        pad.parent = pivot
         boolean(cradle, pad, "UNION")
 
-    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
-    # The indexed sector turns with the cradle. A second unthreaded pin
-    # is withdrawn to change the angle, then fitted through one index hole.
-    sector = prism("Central indexed tilt sector",
-                   [(-4, -4), (7, -9), (14, -12), (20.5, -10),
-                    (22, 1), (19, 4), (10, 4), (5, 4)],
-                   -14.9, 14.9, white)
-    sector.data.transform(axes)
-    sector.parent = pivot
-    boolean(cradle, sector, "UNION")
-    bore(cradle, 3.2, 32, (0, 0, 0), pivot)
-    for angle in TILT_ANGLES:
-        center = Matrix.Rotation(radians(angle), 3, "X") @ Vector((0, 12, -14))
-        bore(cradle, 1.65, 32, center, pivot)
-
-    # Make room for the stationary fork across the cradle's tilt range.
-    for x in (-18.2, 18.2):
-        relief = box("Fork clearance", (12.8, 22, 16), (x, 4, -2.4), white, pivot, bevel=0)
-        boolean(cradle, relief, "DIFFERENCE")
     # Tie the two outer seats across the pivot cheek clearances.
-    bridge = box("Upper seat bridge", (125, 2.2, 3.1), (0, -7.75, 4.8), white, pivot, bevel=0)
+    bridge = prism("Upper seat bridge",
+                   [(-7.3, 3.25), (-6.65, 3.25), (-6.65, 8.1), (-7.2, 8.65), (-8.30, 8.65), (-8.85, 8.1), (-8.85, 4.8)],
+                   -62.5, 62.5, white)
+    bridge.data.transform(axes)
+    bridge.parent = pivot
     boolean(cradle, bridge, "UNION")
     return cradle
 
@@ -611,7 +585,7 @@ def main():
     expose_led_openings()
     finish_deck_edges(panel, white)
     lighten_upper_frame(upper, white)
-    add_center_fork(upper, white)
+    add_fixed_cradle_mount(upper, white)
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
     tray = bpy.data.objects["PRINT_01_lower_tray"]
     diffusers = level_side_lighting(tray, white)
@@ -624,12 +598,10 @@ def main():
         if part.name.startswith("PRINT_TPU"):
             part.name = part.name.replace("PRINT_TPU", "PRINT_PLA", 1)
 
-    pivot = bpy.data.objects.new("Tab5 removable cradle • tilt pivot", None)
+    pivot = bpy.data.objects.new("Tab5 cradle • fixed mount", None)
     bpy.context.collection.objects.link(pivot)
     pivot.location = PIVOT
     cradle = cradle_tray(pivot, white)
-    hinge_pin = mounting_pin("PRINT central tilt axle", 2.95, 46, (0, *PIVOT[1:]), white)
-    angle_pin = mounting_pin("PRINT tilt index pin", 1.48, 46, (0, PIVOT[1] + 12, PIVOT[2] - 14), white)
     add_gpio_port(cradle, pivot, white, brass)
     harness = material("GPIO flat ribbon jacket", (0.19, 0.22, 0.25))
     ribbon_cable("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
@@ -645,19 +617,13 @@ def main():
         (cradle, "NC04_04_tab5_cradle.stl"),
     ):
         export_print_part(part, filename)
-    export_print_part(hinge_pin, "NC04_10_tilt_axle.stl")
-    export_print_part(angle_pin, "NC04_11_tilt_index_pin.stl")
     for diffuser in diffusers:
         side = "left" if "left" in diffuser.name else "right"
         export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")
 
-    for frame, angle in enumerate(TILT_ANGLES, start=1):
-        pivot.rotation_euler.x = radians(-angle)
-        pivot.keyframe_insert(data_path="rotation_euler", index=0, frame=frame)
-
     scene = bpy.context.scene
-    scene.frame_end = len(TILT_ANGLES)
-    scene.frame_set(2)
+    pivot.rotation_euler.x = radians(-CRADLE_ANGLE)
+    bpy.context.view_layer.update()
     add_service_loop(gpio_start, gpio_entry, harness)
     camera = scene.camera
     camera.location = (225, -730, 460)

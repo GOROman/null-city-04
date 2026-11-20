@@ -56,36 +56,20 @@
             <select id="print-plate"></select>
             <p>330 × 320 mm。時間は H3C、0.4 mm ノズル、積層 0.20 mm、エンジニアリングプレートの見積もりです。</p>
           </div>
-          <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
-          <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
-          <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
-          <details class="tilt-simulation" id="tilt-simulation">
-            <summary>MuJoCo チルトシミュレーション</summary>
-            <p>Tab5を載せたときの角度ピンの等価荷重</p>
-            <div class="tilt-cases">
-              <label>角度 <select id="sim-angle"><option>15</option><option selected>30</option><option>45</option></select>°</label>
-              <label>押し込み <select id="sim-force"><option value="0">0 N</option><option value="5" selected>5 N</option></select></label>
-            </div>
-            <p><output id="sim-load" aria-live="polite"></output></p>
-            <button type="button" class="hardware-view" id="sim-release">ピンを抜く動きを再生</button>
-            <p id="sim-status" role="status"></p>
-            <p>MuJoCoで計算した動きの再生です。接着強度とピンの耐久性は実物で確認します。</p>
-          </details>
           <details class="hardware-details">
             <summary>固定ねじ・寸法</summary>
             <dl>
               <dt>天板四隅</dt><dd>M3 × 40 mm × 4本</dd>
-              <dt>チルト軸</dt><dd>一体の中央軸受け・主軸ピン × 1・角度ピン × 1</dd>
+              <dt>Tab5 の角度</dt><dd>後傾15°で固定</dd>
               <dt>Tab5 抜け止め</dt><dd>下端の受け皿と背面2か所の両面テープ</dd>
               <dt>天板受け側</dt><dd>M3 熱圧入インサート × 4個</dd>
-              <dt>チルト軸径 / 軸穴</dt><dd>Ø5.9 mm / Ø6.4 mm</dd>
               <dt>Tab5 ガイド</dt><dd>受け皿に一体化した左右の位置決め</dd>
               <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・背面接着面 約0.6〜0.8 mm</dd>
               <dt>GPIO</dt><dd>下向き 2 × 5 ピン（2.54 mm ピッチ）、10芯フラットケーブル</dd>
               <dt>造形材</dt><dd>PLA（ライトカバーは乳白・半透明 PLA）</dd>
             </dl>
             <button type="button" class="hardware-view" data-view="gpio" aria-pressed="false">下側の GPIO 端子を見る</button>
-            <p>分解表示で天板のねじ、チルト軸、Tab5 の抜け止めと金色のインサートナットを確認できます。手持ちのボタンとレバーを流用し、筐体まわりは PLA でサポートなしの造形を想定しています。</p>
+            <p>分解表示で天板のねじ、Tab5の固定台と受け皿と金色のインサートナットを確認できます。手持ちのボタンとレバーを流用し、筐体まわりは PLA でサポートなしの造形を想定しています。</p>
           </details>
           <label class="toggle-row"><span>ケースを透かす</span><input id="transparent" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row rotate-toggle"><span>自動で回転</span><input id="rotate" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
@@ -137,7 +121,7 @@
       <button type="button" id="play-view" class="play-view" aria-pressed="false">操作する</button>
       <div class="stage-topline"><span><i aria-hidden="true"></i> PBR / HDR IBL</span><span id="load-status" role="status" aria-live="polite">モデルを読み込み中…</span></div>
       <model-viewer id="viewer" tabindex="0" src="./model/nc04.glb" poster="./project/poster.jpg"
-        alt="NULL CITY NC-04。白い筐体、6ボタン、M5Stack Tab5用チルトクレードルを備えたアーケードスティック。"
+        alt="NULL CITY NC-04。白い筐体、6ボタン、M5Stack Tab5用の固定クレードルを備えたアーケードスティック。"
         camera-controls camera-orbit="25deg 65deg 105%" field-of-view="29deg"
         min-camera-orbit="auto 0.1deg 60%" max-camera-orbit="auto 170deg 250%"
         environment-image="./environments/studio_small_03_1k.hdr" tone-mapping="neutral" exposure="0.8"

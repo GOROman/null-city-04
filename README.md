@@ -1,6 +1,6 @@
 # NULL CITY IV / NC-04
 
-NC-04は、M5Stack Tab5をチルト付きの受け皿に載せて使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5のチルト機構と、VF2向けのUSB・BLEジョイスティックを追加しました。
+NC-04は、M5Stack Tab5を15°後傾の固定受け皿に載せて使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5の固定クレードルと、VF2向けのUSB・BLEジョイスティックを追加しました。
 
 ![白い筐体の奥にTab5を取り付けたNC-04の完成イメージ](preview-nc04.jpg)
 
@@ -38,7 +38,7 @@ Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、
 | 2P | — | — | ボタン6・タッチ専用 |
 | 共通GND | 1、3、5のいずれか | — | — |
 
-クレードルのCADには、下辺の **2×5 Ext.Port1** 用の開口とフラットケーブル経路があります。VF2用のハーネスは上のM5-Bus表に合わせて製作し、Tab5を傾けたときのコネクターとケーブルの逃げを確認します。 [配線の詳細](firmware/README.md) · [Ext.Port1の資料](https://docs.m5stack.com/en/tab5/Tab5_Keyboard)
+クレードルのCADには、下辺の **2×5 Ext.Port1** 用の開口とフラットケーブル経路があります。VF2用のハーネスは上のM5-Bus表に合わせて製作し、コネクターとケーブルの逃げを確認します。 [配線の詳細](firmware/README.md) · [Ext.Port1の資料](https://docs.m5stack.com/en/tab5/Tab5_Keyboard)
 
 ## 筐体を作る
 
@@ -47,32 +47,22 @@ H3Cで一式を新造する場合は、下ケース、上フレーム、天板�
 | 部品 | データと仕様 |
 |---|---|
 | 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
-| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [中央チルト版3MF](print/h3c/NC04-center-tilt-frame-08hf-supertack.3mf) · SuperTack、0.8 mm高流量、積層0.32 mm、CLI見積もり約1時間6分 |
+| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [固定台一体型3MF](print/h3c/NC04-fixed-frame-04-supertack.3mf) · 0.4 mm標準、約3時間23分 |
 | 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
-| クレードル一式 | [中央チルト版3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) · 3点、筐体と同じ0.55 mmの面取り、SuperTack、0.4 mm標準、積層0.20 mm、CLI見積もり約59分 |
-| クレードル一式の個別STL | [受け皿](STL/NC04_04_tab5_cradle.stl)・[主軸ピン](STL/NC04_10_tilt_axle.stl)・[角度ピン](STL/NC04_11_tilt_index_pin.stl) 各1個 |
+| クレードル | [STL](STL/NC04_04_tab5_cradle.stl) · [固定式3MF](print/h3c/NC04-fixed-cradle-04-supertack.3mf) · 白PLA、約41分 |
 | ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
-中央チルト版は**新しい上フレーム**と組にして使用します。既存の左右差し込み軸受け版の上フレームとは接合寸法が異なります。CADで15〜45°の干渉と3か所のピン位置を照合し、H3Cでサポートなしのスライスを確認済みです。現物の嵌合、ピンの保持力、接着の耐久性は未確認です。
-
-### MuJoCoでチルトを確認する
-
-3Dビューの「MuJoCo チルトシミュレーション」から、ピンを抜いた場合の動きを再生し、各角度の等価荷重を表示できます。 [WebUI](https://goroman.github.io/null-city-04/)
-
-Python 3.10以降の仮想環境で `python -m pip install mujoco` を実行し、リポジトリ直下から `python simulation/tilt.py` を実行します。macOSでは `mjpython simulation/tilt.py --view` で、角度ピンの着脱と動きを3Dで再生できます。LinuxとWindowsでは `python simulation/tilt.py --view` を使います。
-
-[モデル](simulation/nc04-tilt.xml)は造形用STLを表示し、バッテリーなしのTab5を120.9 gの剛体として扱います。角度ピンは関節拘束で表現し、15°・30°・45°で重力と画面への5 Nの押し込みを再現します。固定時の角度差は最大約0.053°、ピンが静的トルクをすべて受けると仮定した等価荷重は約20〜21 Nでした。ピンを抜くと、重力で15°からモデルの上限45°付近まで傾きます。PLAの変形、ピンの抜け、接着強度、ケーブルの曲げは現物で確認します。 [Tab5の公称質量](https://docs.m5stack.com/en/core/Tab5)
+固定式クレードルは固定台を一体化した新しい上フレームに取り付けます。Tab5は後傾15°で固定します。
 
 ### 組み立て
 
-1. 上フレーム中央の軸受けに受け皿を合わせ、太い主軸ピンを差します。
-2. 受け皿の下端にTab5を載せ、背面の平らな2か所を薄い両面テープで固定します。公式CADと接着面のすき間は約0.6〜0.8 mmなので、現物に合わせてテープ厚を選びます。
-3. 受け皿を好みの角度に合わせ、細い角度ピンを差します。角度を変えるときは、Tab5を支えながら細いピンだけ抜きます。15°・30°・45°で固定できます。
-4. 天板は **M3 × 40 mmねじ4本** で下ケース四隅に固定します。
+1. 受け皿の底面を上フレーム中央の傾斜面に合わせて接着します。
+2. Tab5を受け皿に載せ、背面の平らな2か所を薄い両面テープで固定します。CAD上のすき間は約0.6〜0.8 mmです。
+3. 下側から2×5端子にフラットケーブルを接続し、筐体内に通します。
 
-左右のガイドは受け皿に一体化しました。Tab5の固定とチルト機構はねじなしです。 [Blenderモデル](NULL_CITY_NC04.blend) · [メーカーCAD](docs/references/tab5/)
+[Blenderモデル](NULL_CITY_NC04.blend) · [MuJoCoの固定配置モデル](simulation/nc04-fixed-cradle.xml)
 
-### NC-03から流用する
+## NC-03から流用する
 
 レバー、ボタン、脚、前面ライトカバーを流用できます。既存の下ケースと天板で仮組みするなら、NC-04の上フレームとクレードル一式の2プレートから始められます。左右の照明帯を水平にそろえる場合は、NC-04の下ケースと左右カバーを使います。NC-03の下ケースにM3 × 40 mmねじを使う場合は、穴底までの深さを確認してください。 [NC-03の実機写真](docs/images/nc03-built.jpg) · [NC-03リポジトリ](https://github.com/GOROman/null-city)
 

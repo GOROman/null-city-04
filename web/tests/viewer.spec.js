@@ -14,42 +14,26 @@ async function load(page,{freezeRGB=true}={}){
 test('PBR model, meter scale, artwork, camera and assembly controls',async({page},testInfo)=>{
   const errors=await load(page);
   const model=await page.locator('#viewer').evaluate(v=>({size:v.getDimensions(),animations:v.availableAnimations,materials:v.model.materials.map(m=>m.name)}));
-  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2224,3);
+  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2022,3);
   expect(model.animations).toEqual(['Assembly']);
   expect(model.materials).toContain('Tab5 rear • M5Stack reference photograph');
   await page.locator('.hardware-details summary').click();
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
-  await expect(page.locator('.hardware-details')).toContainText('一体の中央軸受け・主軸ピン × 1・角度ピン × 1');
+  await expect(page.locator('.hardware-details')).toContainText('後傾15°で固定');
   await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
   const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
   await gpioView.click();
   await expect(gpioView).toHaveAttribute('aria-pressed','true');
-  const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').rotation.x);
-  await expect.poll(readTilt).toBeCloseTo(-Math.PI/6,3);
+  const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5CradleMount').rotation.x);
+  await expect.poll(readTilt).toBeCloseTo(-Math.PI/12,3);
   const ribbonStart=()=>page.locator('#viewer').evaluate(v=>{
     const points=v.arcade.scene.getObjectByName('GPIO flat ribbon service loop')?.geometry.getAttribute('position');
     return points&&{width:points.getX(1)-points.getX(0),depth:Math.hypot(
       points.getY(2)-points.getY(1),points.getZ(2)-points.getZ(1)),start:points.getY(0)};
   });
   await expect.poll(async()=> (await ribbonStart())?.width).toBeCloseTo(12.7,3);
-  const initialCable=await ribbonStart();
-  expect(initialCable.depth).toBeCloseTo(.9,3);
-  await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
-  await expect(page.locator('#tab5-tilt-value')).toHaveText('45°');
-  await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
-  expect((await ribbonStart()).start).not.toBeCloseTo(initialCable.start,2);
-  await page.locator('#tilt-simulation summary').click();
-  await page.locator('#sim-angle').selectOption('30');
-  await expect(page.locator('#sim-load')).toContainText('20.6 N');
-  await page.locator('#sim-force').selectOption('0');
-  await expect(page.locator('#sim-load')).toContainText('1.6 N');
-  await page.locator('#sim-release').click();
-  await expect(page.locator('#sim-status')).toContainText('45.14°');
-  const pinVisible=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('PRINT_tilt_index_pin').visible);
-  expect(await pinVisible()).toBe(false);
-  await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
-  expect(await pinVisible()).toBe(true);
+  expect((await ribbonStart()).depth).toBeCloseTo(.9,3);
   await page.locator('#viewer').focus();
   for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
     await page.keyboard.press(key);
@@ -65,7 +49,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect(page.locator('#assembly-value')).toHaveText('100%');
   const pose=await page.locator('#viewer').evaluate(v=>({time:v.currentTime,duration:v.duration}));
   expect(pose.time).toBeGreaterThan(.9*pose.duration);
-  await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
+  await expect.poll(readTilt).toBeCloseTo(-Math.PI/12,3);
   await page.locator('#assembly').evaluate(e=>{e.value='200';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#assembly-value')).toHaveText('造形配置');
   await expect(page.locator('#print-plate option')).toHaveCount(7);
@@ -75,23 +59,23 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     return {plates:groups.length,parts:groups.reduce((n,group)=>n+group.userData.partCount,0),
       positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
   });
-  expect(overview).toEqual({plates:6,parts:13,positions:6});
+  expect(overview).toEqual({plates:6,parts:11,positions:6});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
   await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
   await page.locator('#print-plate').selectOption('3');
   await expect(page.locator('#load-status')).toHaveText('造形配置 · プレート 4');
   const plate=await page.locator('#viewer').evaluate(v=>{
     const group=v.arcade.scene.getObjectByName('NC04PrintPlate');
-    const tablet=v.arcade.scene.getObjectByName('Tab5TiltPivot');
+    const tablet=v.arcade.scene.getObjectByName('Tab5CradleMount');
     return {parts:group.userData.partCount,tabletVisible:tablet.visible};
   });
-  expect(plate).toEqual({parts:3,tabletVisible:false});
+  expect(plate).toEqual({parts:1,tabletVisible:false});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(1);
-  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約59分');
+  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約41分');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#print-plate-controls')).toBeHidden();
   await expect(page.locator('#print-annotations')).toBeHidden();
-  expect(await page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').visible)).toBe(true);
+  expect(await page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5CradleMount').visible)).toBe(true);
   await page.locator('#led').uncheck({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.filter(m=>m.name!=='Tab5 HUD display').every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
   await page.locator('#transparent').check({force:true});
