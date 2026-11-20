@@ -49,8 +49,8 @@
             </div>
           </div>
           <div class="range-heading"><label for="assembly">分解して構造を見る</label><output id="assembly-value" for="assembly">0%</output></div>
-          <input id="assembly" name="assembly" type="range" min="0" max="100" value="0" aria-describedby="assembly-help">
-          <div class="range-labels" id="assembly-help"><span>組立</span><span>分解</span></div>
+          <input id="assembly" name="assembly" type="range" min="0" max="100" value="0" aria-describedby="assembly-help" aria-keyshortcuts="Space">
+          <div class="range-labels" id="assembly-help"><span>組立</span><span>Space で切替</span><span>分解</span></div>
           <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
           <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
           <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
@@ -119,7 +119,7 @@
     <section class="stage" aria-label="NC-04の3Dプレビュー">
       <button type="button" id="play-view" class="play-view" aria-pressed="false">操作する</button>
       <div class="stage-topline"><span><i aria-hidden="true"></i> PBR / HDR IBL</span><span id="load-status" role="status" aria-live="polite">モデルを読み込み中…</span></div>
-      <model-viewer id="viewer" src="./model/nc04.glb" poster="./project/poster.jpg"
+      <model-viewer id="viewer" tabindex="0" src="./model/nc04.glb" poster="./project/poster.jpg"
         alt="NULL CITY NC-04。白い筐体、6ボタン、M5Stack Tab5用チルトクレードルを備えたアーケードスティック。"
         camera-controls camera-orbit="25deg 65deg 105%" field-of-view="29deg"
         min-camera-orbit="auto 0.1deg 60%" max-camera-orbit="auto 170deg 250%"
@@ -137,11 +137,11 @@
       <div class="error-panel" id="error-panel" hidden><strong>3Dモデルを読み込めませんでした</strong><p>接続とWebGLの対応をご確認ください。下のリンクからモデルもダウンロードできます。</p><button id="retry" type="button">再読み込み</button></div>
       <div class="stage-bottom">
         <div class="view-bar" role="group" aria-label="視点を切り替える">
-          <button type="button" data-view="hero" aria-pressed="true">俯瞰</button>
-          <button type="button" data-view="front" aria-pressed="false">正面</button>
-          <button type="button" data-view="right" aria-pressed="false">右側面</button>
-          <button type="button" data-view="rear" aria-pressed="false">背面</button>
-          <button type="button" data-view="top" aria-pressed="false">上面</button>
+          <button type="button" data-view="hero" aria-keyshortcuts="Z" title="Z キー" aria-pressed="true">俯瞰</button>
+          <button type="button" data-view="front" aria-keyshortcuts="X" title="X キー" aria-pressed="false">正面</button>
+          <button type="button" data-view="right" aria-keyshortcuts="C" title="C キー" aria-pressed="false">右側面</button>
+          <button type="button" data-view="rear" aria-keyshortcuts="V" title="V キー" aria-pressed="false">背面</button>
+          <button type="button" data-view="top" aria-keyshortcuts="B" title="B キー" aria-pressed="false">上面</button>
           <button type="button" id="rotate-view" aria-pressed="false" aria-label="自動回転を切り替える" title="自動回転">↻</button>
           <button type="button" id="reset" aria-label="視点と表示設定をリセット" title="リセット">↺</button>
         </div>

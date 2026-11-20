@@ -327,6 +327,23 @@ viewButtons.forEach(button=>button.addEventListener('click',()=>{
     stage.scrollIntoView({block:'start',behavior:'instant'});
   }
 }));
+const viewShortcuts={KeyZ:'hero',KeyX:'front',KeyC:'right',KeyV:'rear',KeyB:'top'};
+window.addEventListener('keydown',event=>{
+  if(!ready||event.defaultPrevented||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey||event.isComposing)return;
+  if(event.target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable=false])'))return;
+  const view=viewShortcuts[event.code];
+  if(view){
+    event.preventDefault();
+    if(!event.repeat)setView(view);
+  }else if(event.code==='Space'&&(event.target===viewer||!event.target.closest?.('button,summary,[role=button]'))){
+    event.preventDefault();
+    event.stopPropagation();
+    if(!event.repeat){
+      assembly.value=Number(assembly.value)>0?'0':'100';
+      setAssembly();
+    }
+  }
+},{capture:true});
 document.querySelector('#reset').addEventListener('click',reset);
 document.querySelector('#retry').addEventListener('click',()=>window.location.reload());
 document.querySelector('#controls').addEventListener('submit',event=>event.preventDefault());

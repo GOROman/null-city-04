@@ -29,6 +29,15 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#tab5-tilt-value')).toHaveText('45°');
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
+  await page.locator('#viewer').focus();
+  for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
+    await page.keyboard.press(key);
+    await expect(page.locator(`[data-view=${view}]`)).toHaveAttribute('aria-pressed','true');
+  }
+  await page.keyboard.press('Space');
+  await expect(page.locator('#assembly-value')).toHaveText('100%');
+  await page.keyboard.press('Space');
+  await expect(page.locator('#assembly-value')).toHaveText('0%');
   await page.getByRole('button',{name:'右側面',exact:true}).click();
   await expect(page.getByRole('button',{name:'右側面',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
