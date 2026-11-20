@@ -25,7 +25,7 @@ function hueRGB(h){
 export class Arcade {
   constructor(viewer,composer,pass,onInput){
     this.viewer=viewer;this.composer=composer;this.pass=pass;this.scene=pass.scene;this.onInput=onInput;
-    this.active=false;this.power=true;this.mode='rainbow';this.speed=1;this.hex='#00a6cf';this.clock=0;this.pulse=0;
+    this.active=false;this.turbo=false;this.turboStart=0;this.power=true;this.mode='rainbow';this.speed=1;this.hex='#00a6cf';this.clock=0;this.pulse=0;
     this.buttons=[];this.pointers=new Map();this.keys=new Set();this.padDirections=new Map();this.drag=null;
     this.stickX=new Spring(190,21);this.stickY=new Spring(190,21);this.ray=new Raycaster();this.ndc=new Vector2();
     this.abort=new AbortController();this.last=performance.now();this.lastPaint=0;
@@ -44,7 +44,7 @@ export class Arcade {
     this.leds=[];
     for(const mesh of composer.selection.values()){
       const original=Array.isArray(mesh.material)?null:mesh.material;
-      if(!original?.emissive||original.emissive.r+original.emissive.g+original.emissive.b===0)continue;
+      if(original?.name==='Tab5 HUD display'||!original?.emissive||original.emissive.r+original.emissive.g+original.emissive.b===0)continue;
       const material=original.clone();mesh.material=material;
       const item={mesh,material,strength:material.emissiveIntensity,texture:null,originalMaterial:original,originalGeometry:mesh.geometry,index:this.leds.length};
       if(mesh.name.includes('diffuser')||mesh.name.includes('LED_strip')){
@@ -84,10 +84,20 @@ export class Arcade {
     for(const id of this.pointers.keys())if(this.viewer.hasPointerCapture(id))this.viewer.releasePointerCapture(id);
     this.pointers.clear();this.report();
   }
+  setTurbo(active){
+    this.turbo=active;
+    this.turboStart=this.clock;
+    this.report();
+  }
+  buttonDown(button){
+    if(!button.sources.size)return false;
+    if(!this.turbo||button.id!=='B1'||button.sources.has('macro'))return true;
+    return Math.floor((this.clock-this.turboStart)*20)%2===0;
+  }
   press(id,down,source){
     if(!this.active)return;
     const b=this.buttons.find(b=>b.id===id);if(!b)return;
-    if(down){const fresh=!b.sources.has(source);b.sources.add(source);if(fresh){b.until=this.clock+.085;this.pulse=1;}}else b.sources.delete(source);
+    if(down){const fresh=!b.sources.has(source);b.sources.add(source);if(fresh){b.until=this.clock+.085;this.pulse=1;if(id==='B1'&&source!=='macro')this.turboStart=this.clock;}}else b.sources.delete(source);
     this.report();
   }
   pad(direction,down,source){if(!this.active)return;if(down)this.padDirections.set(source,direction);else this.padDirections.delete(source);this.report();}
@@ -144,7 +154,7 @@ export class Arcade {
   updatePhysics(dt){
     let moving=false;
     for(const b of this.buttons){
-      const target=b.sources.size||this.clock<b.until?1:0;const before=b.spring.x;
+      const target=this.buttonDown(b)||(!this.turbo||b.id!=='B1')&&this.clock<b.until?1:0;const before=b.spring.x;
       b.spring.step(target,dt);b.spring.x=clamp(b.spring.x,-.05,1.02);
       if(b.spring.x===1.02&&b.spring.v>0)b.spring.v*=-.1;
       b.node.position.copy(b.base).addScaledVector(b.normal,-1.8*b.spring.x);moving||=Math.abs(before-b.spring.x)>.00001;
@@ -166,7 +176,7 @@ export class Arcade {
     const selected=this.stickTarget();const direction=(Math.round(Math.atan2(selected[1],selected[0])*4/Math.PI)+8)%8;
     for(const item of this.leds){
       const {mesh,material,index,texture}=item;let reaction=this.pulse*.25;
-      const match=mesh.name.match(/LED_button_(\d)/);if(match&&this.buttons[Number(match[1])-1]?.sources.size)reaction=1;
+      const match=mesh.name.match(/LED_button_(\d)/);if(match&&this.buttonDown(this.buttons[Number(match[1])-1]))reaction=1;
       const dm=mesh.name.match(/direction_(\d+)/);if(dm&&Math.hypot(...selected)>.2&&Number(dm[1])/45===direction)reaction=1;
       if(mesh.name.includes('LED_1P')&&this.buttons[6].sources.size)reaction=1;
       if(mesh.name.includes('LED_START')&&this.buttons[7].sources.size)reaction=1;
@@ -196,12 +206,13 @@ export class Arcade {
     // Keep springs in wall-clock time even when software rendering drops frames.
     // Spring.step substeps at 240 Hz, so long visible frames remain stable.
     const dt=Math.min(1,Math.max(0,(now-this.last)/1000));this.last=now;this.lastPaint=now;this.clock+=dt;
+    if(this.active&&this.turbo)this.report();
     const moving=this.active&&this.updatePhysics(dt);this.pulse*=Math.exp(-dt*5);
     const animated=this.power&&(this.mode==='rainbow'||this.mode==='pulse'||this.pulse>.001||moving);
     if(animated||moving){this.updateLEDs();if(moving)this.scene.queueShadowRender?.();this.composer.queueRender();}
   }
   report(){
-    const buttons=this.buttons.filter(b=>b.sources.size).map(b=>b.id);const [x,y]=this.stickTarget();
+    const buttons=this.buttons.filter(b=>this.buttonDown(b)).map(b=>b.id);const [x,y]=this.stickTarget();
     const text=JSON.stringify({buttons,x:Math.round(x*100)/100,y:Math.round(y*100)/100});
     if(text!==this.lastInput){this.lastInput=text;this.onInput?.({buttons,x,y});}
   }

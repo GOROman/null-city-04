@@ -18,7 +18,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   expect(model.animations).toEqual(['Assembly']);
   expect(model.materials).toContain('Tab5 rear • M5Stack reference photograph');
   await page.locator('.hardware-details summary').click();
-  await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm');
+  await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
   await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
   const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
@@ -37,7 +37,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   expect(pose.time).toBeGreaterThan(.9*pose.duration);
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
   await page.locator('#led').uncheck({force:true});
-  expect(await page.locator('#viewer').evaluate(v=>v.model.materials.every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
+  expect(await page.locator('#viewer').evaluate(v=>v.model.materials.filter(m=>m.name!=='Tab5 HUD display').every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
   await page.locator('#transparent').check({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.find(m=>m.name==='NC-04 white PLA').pbrMetallicRoughness.baseColorFactor[3])).toBeCloseTo(.18,2);
   await page.locator('#exposure').evaluate(e=>{e.value='1';e.dispatchEvent(new Event('input',{bubbles:true}));});
@@ -178,6 +178,17 @@ test('RGB animation, spring controls, background color and SSAO tuning',async({p
   await expect.poll(()=>page.locator('#viewer').evaluate(v=>v.arcade.snapshot().stick.tiltDegrees)).toBeGreaterThan(8);
   await page.mouse.up();
   await expect.poll(()=>page.locator('#viewer').evaluate(v=>v.arcade.snapshot().stick.tiltDegrees),{timeout:4000}).toBeLessThan(.2);
+  expect(await page.locator('#viewer').evaluate(v=>Boolean(v.arcade.scene.getObjectByName('Tab5DisplaySurface').material.map.isCanvasTexture))).toBe(true);
+  await page.locator('#tab5-turbo').check({force:true});
+  expect(await page.locator('#viewer').evaluate(v=>v.arcade.turbo)).toBe(true);
+  await page.locator('#tab5-macro').selectOption('JKL');
+  await page.locator('#input-readout').evaluate(e=>{
+    window.macroInputs=[];
+    new MutationObserver(()=>window.macroInputs.push(e.value)).observe(e,{childList:true,subtree:true});
+  });
+  await page.locator('#run-macro').click();
+  await expect.poll(()=>page.evaluate(()=>window.macroInputs.filter(value=>/B[356]/.test(value)))).toEqual(['入力：B3','入力：B5','入力：B6']);
+  await expect(page.locator('#run-macro')).toBeEnabled();
   await page.getByRole('button',{name:'視点と表示設定をリセット'}).click();
   await expect(page.locator('.stage')).toHaveAttribute('data-play','false');
   await expect(page.locator('#background-color')).toHaveValue('#e9e9e7');

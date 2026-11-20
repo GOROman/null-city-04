@@ -46,3 +46,6 @@
   padding: 6px 9px;
 }
 .hardware-view[aria-pressed=true] { border-color: var(--accent); }
+
+.macro-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
+.macro-row button { white-space: nowrap; }

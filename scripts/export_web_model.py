@@ -17,16 +17,20 @@ pivot=next(o for o in scene.objects if o.name.startswith("Tab5 removable cradle"
 pivot.animation_data_clear()
 pivot.name="Tab5TiltPivot"
 scene.frame_start=1;scene.frame_end=25
-geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and o.name!='STUDIO_floor']
+geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and not o.name.startswith(('STUDIO_floor', 'GPIO service loop'))]
 print_part_count=sum(o.name.startswith(('PRINT_', 'NC04 upper frame', 'White moving cradle')) for o in geometry)
 
 def displacement(name):
-    if name.startswith(('NC04 upper frame','Front flat decal','Left flat decal','Right flat decal')):return (0,0,32)
+    if name.startswith('NC04 upper frame'):return (0,0,32)
     if name=='Tab5TiltPivot':return (0,0,115)
+    if name=='GpioCableEntry':return (0,0,32)
     if name.startswith(('M3 pivot screw','M3 brass insert')):
         return (34 if bpy.data.objects[name].location.x>0 else -34,0,32 if name.startswith('M3 pivot screw') else 0)
     if name.startswith('M5Stack Tab5'):return (0,0,40)
-    if name.startswith(('Top flat decal','Flush cyan pinstripe')):return (0,0,70)
+    if name.startswith(('Tab5 M3 flat washer', 'Tab5 rear M3 screw')):return (0,26,0)
+    if name.startswith('Deck M3x40 screw'):return (0,0,104)
+    if name.startswith('Deck M3 insert'):return (0,0,13)
+    if name.startswith('Flush cyan pinstripe'):return (0,0,70)
     if name.startswith('PRINT_USB_bridge'):return (0,0,13)
     if name.startswith('PRINT_PLA'):return (0,0,-12)
     if name=='PRINT_light_front_diffuser' or name.startswith(('VISUAL_front_mask','VISUAL_NULL_CITY_wordmark','VISUAL_front_slash')):return (0,-22,0)
@@ -47,7 +51,7 @@ for obj in geometry:
         obj.data.materials.append(indicator)
 
 bpy.ops.object.select_all(action='DESELECT')
-for obj in [*geometry,pivot]:
+for obj in [*geometry,pivot,bpy.data.objects["GpioCableStart"],bpy.data.objects["GpioCableEntry"]]:
     obj.select_set(True)
     start=obj.location.copy();delta=Vector(displacement(obj.name))
     if delta.length:
@@ -88,7 +92,7 @@ data=json.dumps(doc,separators=(',',':')).encode();data+=b' '*((-len(data))%4)
 rest=raw[20+length:]
 path.write_bytes(struct.pack('<III',0x46546C67,2,20+len(data)+len(rest))+struct.pack('<II',len(data),0x4E4F534A)+data+rest)
 inputs=['NULL_CITY_NC04.blend','NULL_CITY_NC04.py','artwork/lighting_layout.json',
-        'artwork/control_layout.json','artwork/led_layout.json','artwork/logo/wordmark.json',
+        'artwork/control_layout.json','artwork/tab5-display.png','artwork/led_layout.json','artwork/logo/wordmark.json','fonts/null-font/glyphs.json',
         'scripts/panel_features.py','artwork/usb_relief.json','scripts/usb_relief.py',
         'docs/references/tab5/Tab5.stl','docs/references/tab5/Tab5-rear.jpg','scripts/export_web_model.py']
 manifest={'name':'NULL CITY NC-04','license':'CC-BY-4.0','geometry_count':len(geometry),

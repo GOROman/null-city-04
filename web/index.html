@@ -41,6 +41,12 @@
               <button type="button" data-arcade-control="P1" aria-label="1Pボタン">1P</button><button type="button" data-arcade-control="START" aria-label="STARTボタン">START</button>
             </div>
             <output id="input-readout" aria-label="入力状態">入力：—</output>
+            <label class="toggle-row"><span>U ボタンの連射</span><input id="tab5-turbo" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+            <label class="environment-label" for="tab5-macro">マクロ</label>
+            <div class="macro-row">
+              <select id="tab5-macro"><option value="UIO">U → I → O</option><option value="JKL">J → K → L</option></select>
+              <button class="hardware-view" type="button" id="run-macro">実行</button>
+            </div>
           </div>
           <div class="range-heading"><label for="assembly">分解して構造を見る</label><output id="assembly-value" for="assembly">0%</output></div>
           <input id="assembly" name="assembly" type="range" min="0" max="100" value="0" aria-describedby="assembly-help">
@@ -49,9 +55,11 @@
           <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
           <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
           <details class="hardware-details">
-            <summary>Tab5 の固定ねじ・寸法</summary>
+            <summary>固定ねじ・寸法</summary>
             <dl>
-              <dt>軸ねじ</dt><dd>M3 × 40 mm（全ねじ）× 2本</dd>
+              <dt>天板四隅</dt><dd>M3 × 40 mm × 4本</dd>
+              <dt>チルト軸</dt><dd>M3 × 14 mm × 2本</dd>
+              <dt>Tab5 抜け止め</dt><dd>純正 M3 インサート・平ワッシャー・短い M3 ねじ × 各2</dd>
               <dt>受け側</dt><dd>M3 熱圧入インサート × 2個</dd>
               <dt>通し穴 / 下穴</dt><dd>Ø3.4 mm / Ø4.0 mm（暫定）</dd>
               <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・前後各0.8 mm</dd>
@@ -59,7 +67,7 @@
               <dt>造形材</dt><dd>PLA（ライトカバーは乳白・半透明 PLA）</dd>
             </dl>
             <button type="button" class="hardware-view" data-view="gpio" aria-pressed="false">下側の GPIO 端子を見る</button>
-            <p>分解表示で軸ねじとインサートの位置を確認できます。手持ちのボタンとレバーを流用し、筐体まわりを6プレートで造形する予定です。</p>
+            <p>分解表示で天板のねじ、チルト軸、Tab5 の抜け止めと真鍮のインサートナットを確認できます。手持ちのボタンとレバーを流用し、筐体まわりは PLA でサポートなしの造形を想定しています。</p>
           </details>
           <label class="toggle-row"><span>ケースを透かす</span><input id="transparent" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row rotate-toggle"><span>自動で回転</span><input id="rotate" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
