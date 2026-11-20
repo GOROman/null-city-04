@@ -230,7 +230,14 @@ for(const button of document.querySelectorAll('[data-arcade-control],[data-direc
   button.addEventListener('blur',()=>update(false,`pad-key:${button.dataset.arcadeControl??button.dataset.direction}`));
   button.addEventListener('keyup',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();update(false,`pad-key:${button.dataset.arcadeControl??button.dataset.direction}`);}});
 }
-viewButtons.forEach(button=>button.addEventListener('click',()=>{if(ready)setView(button.dataset.view);}));
+viewButtons.forEach(button=>button.addEventListener('click',()=>{
+  if(!ready)return;
+  const destination=button.dataset.view;
+  setView(destination);
+  if(destination==='gpio'&&stage.getBoundingClientRect().bottom<innerHeight*.5){
+    stage.scrollIntoView({block:'start',behavior:'instant'});
+  }
+}));
 document.querySelector('#reset').addEventListener('click',reset);
 document.querySelector('#retry').addEventListener('click',()=>window.location.reload());
 document.querySelector('#controls').addEventListener('submit',event=>event.preventDefault());
