@@ -442,8 +442,14 @@ def main():
     white = bpy.data.materials["Pearl white PETG"]
     device = material("Tab5 housing reference", (0.74, 0.75, 0.77))
     display = material("Tab5 front glass", (0.012, 0.019, 0.026))
-    hardware = material("M3 dark screw heads", (0.085, 0.10, 0.12))
-    brass = material("M3 brass insert reference", (0.46, 0.25, 0.055))
+    hardware = material("M3 satin stainless steel", (0.57, 0.60, 0.63))
+    steel_shader = hardware.node_tree.nodes["Principled BSDF"]
+    steel_shader.inputs["Metallic"].default_value = 1
+    steel_shader.inputs["Roughness"].default_value = 0.27
+    brass = material("M3 brass insert reference", (0.56, 0.32, 0.075))
+    brass_shader = brass.node_tree.nodes["Principled BSDF"]
+    brass_shader.inputs["Metallic"].default_value = 0.88
+    brass_shader.inputs["Roughness"].default_value = 0.3
     accent = material("Decal • cyan ink", (0.008, 0.48, 0.72))
     set_color("Purple balltop", (0.012, 0.19, 0.53))
     balltop = bpy.data.materials["Purple balltop"]
