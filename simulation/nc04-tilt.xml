@@ -1,0 +1,42 @@
+<mujoco model="NC-04 Tab5 center tilt">
+  <compiler angle="degree"/>
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast"/>
+  <statistic center="0 0.02 0.07" extent="0.37"/>
+  <visual>
+    <global azimuth="125" elevation="-22"/>
+  </visual>
+  <default>
+    <geom contype="0" conaffinity="0"/>
+  </default>
+  <asset>
+    <mesh name="tray" file="../STL/NC04_01_lower_tray.stl" scale=".001 .001 .001"/>
+    <mesh name="frame" file="../STL/NC04_02_upper_frame.stl" scale=".001 .001 .001"/>
+    <mesh name="panel" file="../STL/NC04_03_control_panel.stl" scale=".001 .001 .001"/>
+    <mesh name="cradle" file="../STL/NC04_04_tab5_cradle.stl" scale=".001 .001 .001"/>
+    <mesh name="axle" file="../STL/NC04_10_tilt_axle.stl" scale=".001 .001 .001"/>
+    <mesh name="index_pin" file="../STL/NC04_11_tilt_index_pin.stl" scale=".001 .001 .001"/>
+  </asset>
+  <worldbody>
+    <light pos="0 -0.25 0.45" dir="0 0.35 -1"/>
+    <geom type="mesh" mesh="tray" rgba=".86 .88 .92 1"/>
+    <geom type="mesh" mesh="frame" pos="0 0 .024" rgba=".95 .96 .99 1"/>
+    <geom type="mesh" mesh="panel" pos="0 0 .043" euler="2.55 0 0" rgba=".84 .88 .93 1"/>
+    <geom type="mesh" mesh="axle" pos="-.0231 .079 .073" euler="0 90 0" rgba=".65 .68 .74 1"/>
+    <body name="angle_pin" mocap="true" pos="-.0231 .091 .059">
+      <geom type="mesh" mesh="index_pin" euler="0 90 0" rgba=".05 .46 .81 1"/>
+    </body>
+    <body name="tilting_cradle" pos="0 .079 .073">
+      <joint name="tilt" type="hinge" axis="-1 0 0" range="15 45" damping=".004"/>
+      <geom type="mesh" mesh="cradle" pos="0 0 -.012" density="1240" rgba=".95 .96 .99 1"/>
+      <!-- Battery-free Tab5, modeled as a rigid 128 x 80 x 12 mm body. -->
+      <geom type="box" pos="0 0 .0465" size=".064 .006 .040" mass=".1209" rgba=".66 .70 .77 1"/>
+      <geom type="box" pos="0 -.0061 .0465" size=".058 .0001 .035" mass="0" rgba=".018 .08 .13 1"/>
+    </body>
+  </worldbody>
+  <equality>
+    <!-- Joint polynomial offsets use radians even when the joint range uses degrees. -->
+    <joint name="lock_15" joint1="tilt" polycoef=".2617993878 0 0 0 0" active="false" solref=".004 1"/>
+    <joint name="lock_30" joint1="tilt" polycoef=".5235987756 0 0 0 0" active="false" solref=".004 1"/>
+    <joint name="lock_45" joint1="tilt" polycoef=".7853981634 0 0 0 0" active="false" solref=".004 1"/>
+  </equality>
+</mujoco>
