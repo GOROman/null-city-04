@@ -236,6 +236,28 @@ def export_print_part(part, filename, rotation=None):
     bpy.data.meshes.remove(staging_mesh)
 
 
+def lighten_upper_frame(frame, white):
+    # Relieve the long spans from inside, leaving the four corner bosses and
+    # rear snap sockets in solid stock. The inner walls taper toward the deck.
+    side_profile = [(135, 23), (144, 23), (144, 35), (140.5, 45),
+                    (140.5, 51), (135, 51)]
+    side_axes = Matrix(((1, 0, 0, 0), (0, 0, -1, 0),
+                        (0, 1, 0, 0), (0, 0, 0, 1)))
+    for sign in (-1, 1):
+        outline = [(sign*x, z) for x,z in side_profile]
+        cutter = prism("Upper side wall relief", outline, -65, 65, white)
+        cutter.data.transform(side_axes)
+        boolean(frame, cutter, "DIFFERENCE")
+
+    front_profile = [(-89, 23), (-80, 23), (-80, 46),
+                     (-85.5, 46), (-85.5, 41), (-89, 33)]
+    front_axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0),
+                         (0, 1, 0, 0), (0, 0, 0, 1)))
+    cutter = prism("Upper front wall relief", front_profile, -119, 119, white)
+    cutter.data.transform(front_axes)
+    boolean(frame, cutter, "DIFFERENCE")
+
+
 def add_snap_in_bearings(frame, white):
     # The shoulder and latch share one side face so the entire part prints flat.
     profile = [(89.35, 31.1), (90.30, 31.1), (91.25, 32.5), (91.25, 33.56),
@@ -634,6 +656,7 @@ def main():
     add_debossed_graphics(panel, upper, accent)
     expose_led_openings()
     finish_deck_edges(panel, white)
+    lighten_upper_frame(upper, white)
     hinge_bearings = add_snap_in_bearings(upper, white)
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
     tray = bpy.data.objects["PRINT_01_lower_tray"]

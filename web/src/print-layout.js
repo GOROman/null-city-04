@@ -7,7 +7,7 @@ export const plates = [
   {name: '下ケース・USB押さえ', seconds: 27549, parts: [
     ['NC04_01_lower_tray', 0, -26], ['PRINT_USB_bridge_1', -29, 113], ['PRINT_USB_bridge_2', 29, 113],
   ]},
-  {name: '上フレーム', seconds: 13752, parts: [['NC04_02_upper_frame', 0, 0]]},
+  {name: '上フレーム', seconds: 12141, parts: [['NC04_02_upper_frame', 0, 0]]},
   {name: '天板', seconds: 15199, parts: [['NC04_03_control_panel', 0, 0]]},
   {name: 'Tab5 クレードル・スナップガイド', seconds: 3673, parts: [
     ['NC04_04_tab5_cradle', 0, -24], ['NC04_05_tab5_snap_guide', -22, 31], ['NC04_05_tab5_snap_guide', 22, 31],

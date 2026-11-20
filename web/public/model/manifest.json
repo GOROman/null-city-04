@@ -9,8 +9,8 @@
     55
   ],
   "inputs": {
-    "NULL_CITY_NC04.blend": "2bf98a39c1ef68b542369d6b29a75b970e7377407d3b5e25bf1e0a9564304933",
-    "NULL_CITY_NC04.py": "64dbf925f1fe52715f8be7f237b2cf3f2016d7b4f541fc51304228f2ced8db81",
+    "NULL_CITY_NC04.blend": "9465d610bd3a9087f9d2ee83059c4b2892a96f39cc6d55ff506228fe8dd349fa",
+    "NULL_CITY_NC04.py": "23055b341688be475e251a0d1766f3e548c4d8c53150c6465ab73585ba41544c",
     "artwork/lighting_layout.json": "0be694d524caa767faf19912489ff387aecfe88fe896315d2ef1fb1b67560e17",
     "artwork/control_layout.json": "8fbc2b614be24fea58ebcf4d9a7e2862026e5631faf558d88af0915e6eeb7e8d",
     "artwork/tab5-display.png": "ae7ee54a316d17a22123ba3cf4279cbdae897d6ea8b9072b5eff0c2603d72660",
@@ -24,5 +24,5 @@
     "docs/references/tab5/Tab5-rear.jpg": "3592a3be9dabdee2771701722ca59033964b11bad0b09908e191893c423344e2",
     "scripts/export_web_model.py": "7dc1152b40b51d72689da0e5c81a70ed4dc451ec2367141379ef8ed2769ca1f2"
   },
-  "glb_sha256": "034e2b6d2cb31fee0a4343fd0a354e2c1f6bf8e58364d46ba73f3740c2c8fea4"
+  "glb_sha256": "821ffea214bb3b40417a73384dbd9d73ebdf8df3936bdf2148086dd0e236c872"
 }
