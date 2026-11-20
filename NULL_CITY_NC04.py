@@ -388,13 +388,23 @@ def mounting_pin(name, radius, length, location, white):
 
 
 def cradle_tray(pivot, white):
-    cradle = box("White moving cradle", (135, 15, 9), (0, 0, 0), white, pivot, bevel=0)
+    def chamfered_shell_box(name, size, center, width):
+        part = box(name, size, center, white, pivot, bevel=0)
+        bevel = part.modifiers.new("Shell chamfer", "BEVEL")
+        bevel.width = width
+        bevel.segments = 1
+        bpy.context.view_layer.objects.active = part
+        bpy.ops.object.modifier_apply(modifier=bevel.name)
+        return part
+
+    # Use the same narrow, flat chamfer as the enclosure rim on exposed edges.
+    cradle = chamfered_shell_box("White moving cradle", (135, 15, 9), (0, 0, 0), 0.55)
     for side in (-1, 1):
         seat = box("Integral lower seat", (24, 16, 3.4), (side * 54, 0, 4.65), white, pivot, bevel=0)
         boolean(cradle, seat, "UNION")
-        rim = box("Integral side stop", (2.6, 15.6, 8.5), (side * 65.9, 0, 7.8), white, pivot, bevel=0)
+        rim = chamfered_shell_box("Integral side stop", (2.6, 15.6, 8.5), (side * 65.9, 0, 7.8), 0.55)
         boolean(cradle, rim, "UNION")
-        lip = box("Integral front lip", (19, 2.0, 6), (side * 55, -7.4, 6.5), white, pivot, bevel=0)
+        lip = chamfered_shell_box("Integral front lip", (19, 2.0, 6), (side * 55, -7.4, 6.5), 0.55)
         boolean(cradle, lip, "UNION")
 
     # Two flat pads leave room behind the center of the tablet and accept

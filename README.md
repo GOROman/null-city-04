@@ -49,13 +49,15 @@ H3Cで一式を新造する場合は、下ケース、上フレーム、天板�
 | 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
 | 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [中央チルト版3MF](print/h3c/NC04-center-tilt-frame-08hf-supertack.3mf) · SuperTack、0.8 mm高流量、積層0.32 mm、CLI見積もり約1時間6分 |
 | 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
-| クレードル一式 | [中央チルト版3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) · 3点、SuperTack、0.4 mm標準、積層0.20 mm、CLI見積もり約59分 |
+| クレードル一式 | [中央チルト版3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) · 3点、筐体と同じ0.55 mmの面取り、SuperTack、0.4 mm標準、積層0.20 mm、CLI見積もり約59分 |
 | クレードル一式の個別STL | [受け皿](STL/NC04_04_tab5_cradle.stl)・[主軸ピン](STL/NC04_10_tilt_axle.stl)・[角度ピン](STL/NC04_11_tilt_index_pin.stl) 各1個 |
 | ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
 中央チルト版は**新しい上フレーム**と組にして使用します。既存の左右差し込み軸受け版の上フレームとは接合寸法が異なります。CADで15〜45°の干渉と3か所のピン位置を照合し、H3Cでサポートなしのスライスを確認済みです。現物の嵌合、ピンの保持力、接着の耐久性は未確認です。
 
 ### MuJoCoでチルトを確認する
+
+3Dビューの「MuJoCo チルトシミュレーション」から、ピンを抜いた場合の動きを再生し、各角度の等価荷重を表示できます。 [WebUI](https://goroman.github.io/null-city-04/)
 
 Python 3.10以降の仮想環境で `python -m pip install mujoco` を実行し、リポジトリ直下から `python simulation/tilt.py` を実行します。macOSでは `mjpython simulation/tilt.py --view` で、角度ピンの着脱と動きを3Dで再生できます。LinuxとWindowsでは `python simulation/tilt.py --view` を使います。
 

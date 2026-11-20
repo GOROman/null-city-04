@@ -20,7 +20,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await page.locator('.hardware-details summary').click();
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
-  await expect(page.locator('.hardware-details')).toContainText('差し込み式軸受け・造形軸ピン・C クリップ × 各2');
+  await expect(page.locator('.hardware-details')).toContainText('一体の中央軸受け・主軸ピン × 1・角度ピン × 1');
   await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
   const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
   await gpioView.click();
@@ -39,6 +39,17 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect(page.locator('#tab5-tilt-value')).toHaveText('45°');
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
   expect((await ribbonStart()).start).not.toBeCloseTo(initialCable.start,2);
+  await page.locator('#tilt-simulation summary').click();
+  await page.locator('#sim-angle').selectOption('30');
+  await expect(page.locator('#sim-load')).toContainText('20.6 N');
+  await page.locator('#sim-force').selectOption('0');
+  await expect(page.locator('#sim-load')).toContainText('1.6 N');
+  await page.locator('#sim-release').click();
+  await expect(page.locator('#sim-status')).toContainText('45.14°');
+  const pinVisible=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('PRINT tilt index pin').visible);
+  expect(await pinVisible()).toBe(false);
+  await page.locator('#tab5-tilt').evaluate(e=>{e.value='30';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  expect(await pinVisible()).toBe(true);
   await page.locator('#viewer').focus();
   for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
     await page.keyboard.press(key);

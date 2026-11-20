@@ -7,7 +7,7 @@ export const plates = [
   {name: '下ケース', seconds: 25751, parts: [['NC04_01_lower_tray', 0, 0]]},
   {name: '上フレーム', seconds: 12190, parts: [['NC04_02_upper_frame', 0, 0]]},
   {name: '天板', seconds: 15199, parts: [['NC04_03_control_panel', 0, 0]]},
-  {name: 'Tab5 クレードル・チルトピン', seconds: 3557, parts: [
+  {name: 'Tab5 クレードル・チルトピン', seconds: 3544, parts: [
     ['NC04_04_tab5_cradle', 0, -24], ['NC04_10_tilt_axle', -20, 24], ['NC04_11_tilt_index_pin', 20, 24],
   ]},
   {name: '脚', seconds: 1117, parts: [

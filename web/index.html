@@ -59,16 +59,28 @@
           <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
           <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
           <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
+          <details class="tilt-simulation" id="tilt-simulation">
+            <summary>MuJoCo チルトシミュレーション</summary>
+            <p>Tab5を載せたときの角度ピンの等価荷重</p>
+            <div class="tilt-cases">
+              <label>角度 <select id="sim-angle"><option>15</option><option selected>30</option><option>45</option></select>°</label>
+              <label>押し込み <select id="sim-force"><option value="0">0 N</option><option value="5" selected>5 N</option></select></label>
+            </div>
+            <p><output id="sim-load" aria-live="polite"></output></p>
+            <button type="button" class="hardware-view" id="sim-release">ピンを抜く動きを再生</button>
+            <p id="sim-status" role="status"></p>
+            <p>MuJoCoで計算した動きの再生です。接着強度とピンの耐久性は実物で確認します。</p>
+          </details>
           <details class="hardware-details">
             <summary>固定ねじ・寸法</summary>
             <dl>
               <dt>天板四隅</dt><dd>M3 × 40 mm × 4本</dd>
-              <dt>チルト軸</dt><dd>差し込み式軸受け・造形軸ピン・C クリップ × 各2</dd>
-              <dt>Tab5 抜け止め</dt><dd>純正 M3 インサート・平ワッシャー・短い M3 ねじ × 各2</dd>
+              <dt>チルト軸</dt><dd>一体の中央軸受け・主軸ピン × 1・角度ピン × 1</dd>
+              <dt>Tab5 抜け止め</dt><dd>下端の受け皿と背面2か所の両面テープ</dd>
               <dt>天板受け側</dt><dd>M3 熱圧入インサート × 4個</dd>
-              <dt>チルト軸径 / 軸穴</dt><dd>Ø6.0 mm / Ø6.4 mm</dd>
-              <dt>Tab5 ガイド</dt><dd>左右共通のスナップ式 × 2</dd>
-              <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・前後各0.8 mm</dd>
+              <dt>チルト軸径 / 軸穴</dt><dd>Ø5.9 mm / Ø6.4 mm</dd>
+              <dt>Tab5 ガイド</dt><dd>受け皿に一体化した左右の位置決め</dd>
+              <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・背面接着面 約0.6〜0.8 mm</dd>
               <dt>GPIO</dt><dd>下向き 2 × 5 ピン（2.54 mm ピッチ）、10芯フラットケーブル</dd>
               <dt>造形材</dt><dd>PLA（ライトカバーは乳白・半透明 PLA）</dd>
             </dl>

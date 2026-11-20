@@ -17,7 +17,7 @@ STLの単位はmm。各STLを個別のオブジェクトとして読み込み、
 | 部品 | SuperTack用3MF | ノズル・積層 | CLI見積もり |
 |---|---|---|---|
 | 中央軸受け一体の上フレーム | [3MF](print/h3c/NC04-center-tilt-frame-08hf-supertack.3mf) | 0.8 mm高流量・0.32 mm | 約1時間6分、114.4 g |
-| 受け皿、主軸ピン、角度ピン | [3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) | 0.4 mm標準・0.20 mm | 約59分、22.4 g |
+| 受け皿、主軸ピン、角度ピン | [3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) | 0.4 mm標準・0.20 mm | 約59分、22.3 g |
 
 白PLA Paletteでサポートなしのスライスを確認。上フレームのCLIログに高流量設定の読み込み警告が出たため、実機ノズルと同期してからBambu Studioで再スライスします。現物の造形と嵌合は未確認です。以下のNC-04ジョブは従来の左右差し込み軸受け版の記録です。
 
