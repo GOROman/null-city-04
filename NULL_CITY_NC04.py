@@ -16,8 +16,8 @@ TAB5_WIDTH = 128.0
 SIDE_CLEARANCE = 0.7
 PIVOT = (0, 80, 67)
 GPIO_X = -38
-GPIO_Y = 12.5
-GPIO_CABLE_START = (GPIO_X, 15.7, 4.6)
+GPIO_Y = 3.4
+GPIO_CABLE_START = (GPIO_X, 7.7, 3.7)
 GPIO_CABLE_ENTRY = (GPIO_X, 96, 32)
 REFERENCES = ROOT / "docs" / "references" / "tab5"
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -98,6 +98,64 @@ def thin_tray_floor(tray, white):
     boolean(tray, floor_cut, "DIFFERENCE")
 
 
+def side_lighting_solid(name, rear, front, depth, transform, finish=None):
+    vertices = [(u, v, z) for profile, z in ((rear, 0), (front, depth)) for u, v in profile]
+    faces = [(3, 2, 1, 0), (4, 5, 6, 7)]
+    faces += [(i, (i + 1) % 4, (i + 1) % 4 + 4, i + 4) for i in range(4)]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(vertices, [], faces)
+    solid = bmesh.new()
+    solid.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(solid, faces=list(solid.faces))
+    solid.to_mesh(mesh)
+    solid.free()
+    part = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(part)
+    part.matrix_world = transform
+    if finish:
+        mesh.materials.append(finish)
+    return part
+
+
+def level_side_lighting(tray, white):
+    config = json.loads((ROOT / "artwork" / "lighting_layout.json").read_text())
+    side = config["side"]
+    diffusers = []
+    for sign, name in ((-1, "left"), (1, "right")):
+        for old in ("PRINT_light_" + name + "_diffuser", "VISUAL_side_LED_strip_" + name):
+            bpy.data.objects.remove(bpy.data.objects[old], do_unlink=True)
+        refill = box("Restore side wall", (6, 162, 18.5), (sign * 147, 0, 14.25), white, bevel=0)
+        boolean(tray, refill, "UNION")
+        axes = Matrix(((0, 0, sign, 0), (sign, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+        def placement(x):
+            return Matrix.Translation((sign * x, 0, 0)) @ axes
+        def profile(key, z):
+            return [(sign * y, z + offset) for y, offset in side[key]]
+        center = side["center_z_mm"]
+        seat = side["seat_depth_mm"]
+        for rear, front, start, thickness in (
+            ("inner_back", "inner_seat", 0, seat),
+            ("outer_seat", "outer_front", seat, side["outer_depth_mm"] - seat),
+        ):
+            cutter = side_lighting_solid("Level side light pocket", profile(rear, center),
+                                        profile(front, center), thickness,
+                                        placement(side["pocket_origin_abs_x_mm"] + start))
+            boolean(tray, cutter, "DIFFERENCE")
+        diffusers.append(side_lighting_solid(
+            "PRINT_light_" + name + "_diffuser", profile("lens_back", center),
+            profile("lens_front", center), config["diffuser_thickness_mm"],
+            placement(side["lens_origin_abs_x_mm"]),
+            bpy.data.materials["Backlit translucent PLA illustration"],
+        ))
+        strip = profile("strip_outline", side["strip_center_z_mm"])
+        side_lighting_solid("VISUAL_side_LED_strip_" + name, strip, strip,
+                           side["strip_depth_mm"], placement(side["strip_origin_abs_x_mm"]),
+                           bpy.data.materials["Magenta lighting illustration"])
+        for y in side["wire_y_mm"]:
+            bore(tray, 1.6, 10, (sign * 145, y, center))
+    return diffusers
+
+
 def finish_shell_edge(part, height, half_width, half_depth, corner, width):
     limits = (
         lambda v: abs(v.x) - half_width,
@@ -154,10 +212,12 @@ def finish_deck_edges(panel, white):
         boolean(panel, cutter, "DIFFERENCE")
 
 
-def export_print_part(part, filename):
+def export_print_part(part, filename, rotation=None):
     mesh = bmesh.new()
     mesh.from_mesh(part.data)
     bmesh.ops.triangulate(mesh, faces=list(mesh.faces))
+    if rotation is not None:
+        mesh.transform(rotation)
     bottom = min(vertex.co.z for vertex in mesh.verts)
     for vertex in mesh.verts:
         vertex.co.z -= bottom
@@ -211,7 +271,7 @@ def add_tab5(pivot, case, glass, brass):
             continue
         face = []
         for x, y, z in points:
-            point = (round(64 - x, 5), round(-z - 6, 5), round(80.89014 - y + 6.5, 5))
+            point = (round(x - 64, 5), round(-z - 6, 5), round(y - 0.89014 + 6.5, 5))
             face.append(vertices.setdefault(point, len(vertices)))
         if len(set(face)) == 3:
             faces.append(face)
@@ -228,15 +288,15 @@ def add_tab5(pivot, case, glass, brass):
             face.material_index = 1
         for index in face.loop_indices:
             x, _, z = mesh.vertices[mesh.loops[index].vertex_index].co
-            uv.data[index].uv = (0.5 - x / 128, (z - 6.5) / 80)
+            uv.data[index].uv = (0.5 + x / 128, 1 - (z - 6.5) / 80)
     tab = bpy.data.objects.new("M5Stack Tab5 • official assembled CAD", mesh)
     bpy.context.collection.objects.link(tab)
     tab.parent = pivot
     # The manufacturer STL models the structure. The thin glass cap closes its open front.
     box("Tab5 front glass cover", (127, 0.32, 79), (0, -6, 46.5), glass, tab, bevel=0.13)
     add_display(tab)
-    for x in (-59.8, 59.8):
-        center = (x, 5.68, 10.75)
+    for x in (-60, 60):
+        center = (x, 5.68, 10.45)
         factory_insert = cylinder("Tab5 factory M3 insert", 1.42, 0.6, center, tab, axis="Y")
         bore(factory_insert, 1.22, 1.2, center, tab, axis="Y")
         factory_insert.data.materials.append(brass)
@@ -288,10 +348,39 @@ def add_deck_hardware(tray, upper, panel, hardware, brass):
             head.data.materials.append(hardware)
 
 
+def add_snap_guides(cradle, pivot, white):
+    guides = []
+    yz_to_xyz = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    for side in (-1, 1):
+        guide = box("Tab5 snap-in guide", (3.2, 17.6, 12.4),
+                    (side * 66.3, 0, 12.5), white, pivot, bevel=0.35)
+        bridge = box("Guide locating foot", (6.7, 5.8, 1.7),
+                     (side * 64.25, 0, 5.65), white, pivot, bevel=0.2)
+        boolean(guide, bridge, "UNION")
+
+        # The tongue is inboard of the M3 screw tip and flexes toward the front.
+        profile = [(-1.5, 6), (0, 6), (0, -3.8), (0.95, -5.25),
+                   (0.35, -6.7), (-1.5, -6.7)]
+        ends = sorted((side * 60.9, side * 63.1))
+        tongue = prism("Guide snap tongue", profile, *ends, white)
+        tongue.data.transform(yz_to_xyz)
+        tongue.parent = pivot
+        boolean(guide, tongue, "UNION")
+
+        seat = box("Guide locating recess cutter", (7.2, 6.3, 2.2),
+                   (side * 64.25, 0, 5.7), white, pivot, bevel=0.05)
+        boolean(cradle, seat, "DIFFERENCE")
+        slot = box("Snap tongue slot cutter", (2.7, 2.8, 15),
+                   (side * 62, -0.95, 0.0), white, pivot, bevel=0.1)
+        boolean(cradle, slot, "DIFFERENCE")
+        guides.append(guide)
+    return guides
+
+
 def add_tab5_retention(cradle, pivot, hardware):
     # These centers are in the two lower factory holes of the official Tab5 body STL.
-    for x in (-59.8, 59.8):
-        z = 10.75
+    for x in (-60, 60):
+        z = 10.45
         bore(cradle, 1.7, 5, (x, 8.4, z), pivot, axis="Y")
         washer = cylinder("Tab5 M3 flat washer", 3.5, 0.55, (x, 10.28, z), pivot, axis="Y")
         bore(washer, 1.6, 1, (x, 10.28, z), pivot, axis="Y")
@@ -341,20 +430,17 @@ def add_service_loop(start, entry, finish):
 
 
 def add_gpio_port(cradle, pivot, white, brass):
-    # Put the extension socket behind the tilt axis so its plug clears the M3 bore.
-    shroud = box("GPIO lower socket boss", (24, 10.1, 16), (GPIO_X, 11.4, 8), white, pivot)
-    boolean(cradle, shroud, "UNION")
-    pocket = box("GPIO plug access cutter", (18, 8, 16), (GPIO_X, GPIO_Y, 4), white, pivot)
+    # Ext.Port1 opens on the lower edge of the C145 CAD, not on the rear face.
+    pocket = box("Ext.Port1 underside access cutter", (18, 9, 13), (GPIO_X, 4, 0.4), white, pivot)
     boolean(cradle, pocket, "DIFFERENCE")
-    tunnel = box("Ext.Port1 harness tunnel cutter", (14, 10, 3.4), (GPIO_X, 7.8, 4.9), white, pivot)
-    boolean(cradle, tunnel, "DIFFERENCE")
 
     plastic = material("GPIO connector insulator", (0.036, 0.065, 0.075))
-    box("GPIO 2x5 header insulator", (13.6, 5.9, 2.5), (GPIO_X, GPIO_Y, 10.75), plastic, pivot)
+    box("GPIO 2x5 plug insulator", (13.2, 5.2, 3.6), (GPIO_X, GPIO_Y, 4.6), plastic, pivot)
     for row in (-1, 1):
         for column in range(-2, 3):
-            position = (GPIO_X + column * 2.54, GPIO_Y + row * 1.27, 7.85)
-            box("GPIO header pin", (0.64, 0.64, 3.4), position, brass, pivot, bevel=0.05)
+            position = (GPIO_X + column * 2.54, GPIO_Y + row * 1.27, 7.65)
+            box("GPIO header pin", (0.64, 0.64, 2.8), position, brass, pivot, bevel=0.05)
+
 
 
 def set_color(material_name, color, emission=False):
@@ -469,6 +555,7 @@ def main():
     add_shoulders(upper, white)
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
     tray = bpy.data.objects["PRINT_01_lower_tray"]
+    diffusers = level_side_lighting(tray, white)
     thin_tray_floor(tray, white)
     finish_shell_edge(tray, 24, 150, 95, 8, 0.7)
     finish_shell_edge(tray, 3, 149, 94, 8, 0.85)
@@ -483,12 +570,10 @@ def main():
     pivot.location = PIVOT
     cradle = box("White moving cradle", (138, 15, 10), (0, 0, 0), white, pivot, bevel=1.3)
     for side in (-1, 1):
-        rail_x = side * (TAB5_WIDTH / 2 + SIDE_CLEARANCE + 1.6)
         rails = (
             box("Lower seat", (27, 16, 3), (side * 55, 0, 5), white, pivot),
-            box("Short slide-in guide", (3.2, 17.6, 15), (rail_x, 0, 11), white, pivot),
-            box("Front retaining lip", (4.5, 2.4, 10), (side * 63, -8.0, 10), white, pivot),
-            box("Rear retaining lip", (11, 3.2, 10), (side * 61, 8.4, 10), white, pivot),
+            box("Front retaining lip", (4.5, 2.4, 10), (side * 61.7, -8.0, 10), white, pivot),
+            box("Rear retaining lip", (10.1, 3.2, 10), (side * 59.45, 8.4, 10), white, pivot),
         )
         for rail in rails:
             boolean(cradle, rail, "UNION")
@@ -501,12 +586,10 @@ def main():
         head = cylinder("M3 pivot screw head", 2.75, 2.5, (side * 79.75, *PIVOT[1:]))
         head.data.materials.append(hardware)
 
+    guides = add_snap_guides(cradle, pivot, white)
     add_gpio_port(cradle, pivot, white, brass)
     harness = material("GPIO cable jacket", (0.023, 0.065, 0.082))
-    cable_curve("Ext.Port1 to 2x5 pigtail",
-                [(GPIO_X, 4, 6.1), (GPIO_X, 4, 4.8), (GPIO_X, 7, 4.5),
-                 (GPIO_X, 10.8, 4.5), (GPIO_X, 12.5, 4.9)],
-                harness, pivot)
+    cable_curve("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
     gpio_start = anchor("GpioCableStart", GPIO_CABLE_START, pivot)
     gpio_entry = anchor("GpioCableEntry", GPIO_CABLE_ENTRY)
     add_tab5_retention(cradle, pivot, hardware)
@@ -518,6 +601,10 @@ def main():
         (cradle, "NC04_04_tab5_cradle.stl"),
     ):
         export_print_part(part, filename)
+    export_print_part(guides[1], "NC04_05_tab5_snap_guide.stl", Matrix.Rotation(radians(90), 4, "Y"))
+    for diffuser in diffusers:
+        side = "left" if "left" in diffuser.name else "right"
+        export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")
 
     for frame, angle in enumerate(TILT_ANGLES, start=1):
         pivot.rotation_euler.x = radians(-angle)
