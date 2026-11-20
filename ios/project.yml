@@ -1,0 +1,20 @@
+name: NC04JoystickCheck
+options:
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  NC04JoystickCheck:
+    type: application
+    platform: iOS
+    sources:
+      - JoystickCheck
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.goroman.nc04joystickcheck
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: NC-04 Joy Check
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: "1,2"
