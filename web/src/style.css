@@ -37,3 +37,12 @@
 @media (max-width: 380px) {
   .view-bar button { min-width: 43px; }
 }
+
+.hardware-view {
+  background: #29242f;
+  color: inherit;
+  border: 1px solid #514658;
+  border-radius: 4px;
+  padding: 6px 9px;
+}
+.hardware-view[aria-pressed=true] { border-color: var(--accent); }

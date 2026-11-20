@@ -14,7 +14,9 @@ from mathutils import Matrix, Vector
 ROOT = Path(__file__).resolve().parent
 TAB5_WIDTH = 128.0
 SIDE_CLEARANCE = 0.7
-PIVOT = (0, 80, 61)
+PIVOT = (0, 80, 67)
+GPIO_X = -38
+GPIO_Y = 12.5
 REFERENCES = ROOT / "docs" / "references" / "tab5"
 sys.path.insert(0, str(ROOT / "scripts"))
 from panel_features import prism
@@ -74,8 +76,8 @@ def bore(part, radius, width, position, parent=None):
 
 def add_shoulders(frame, white):
     # The lower polygon overlaps the frame's rear wall, outside the deck opening.
-    profile = [(86, 36), (94, 36), (94, 47), (86, 66), (79, 69),
-               (73, 67), (71, 61), (75, 55), (82, 53), (90, 50)]
+    profile = [(86, 36), (94, 36), (94, 47), (86, 72), (79, 75),
+               (73, 73), (71, 67), (75, 55), (82, 53), (90, 50)]
     to_world = Matrix(((0, 0, 1, 0), (1, 0, 0, 0),
                        (0, 1, 0, 0), (0, 0, 0, 1)))
     for x in (-74, 74):
@@ -86,7 +88,7 @@ def add_shoulders(frame, white):
         bevel.segments = 4
         boolean(frame, shoulder, "UNION")
         bore(frame, 1.7, 11, (x, *PIVOT[1:]))
-    feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (9.5, 89, 32), white, bevel=2)
+    feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
     boolean(frame, feedthrough, "DIFFERENCE")
     frame.name = "NC04 upper frame • integral white cradle shoulders"
 
@@ -132,9 +134,21 @@ def add_tab5(pivot, case, glass):
     tab.parent = pivot
     # The manufacturer STL models the structure. The thin glass cap closes its open front.
     box("Tab5 front glass cover", (127, 0.32, 79), (0, -6, 46.5), glass, tab, bevel=0.13)
-    # Envelope located from the manufacturer's rear photograph, for connector access checks.
-    connector = material("M5-Bus plug envelope", (0.045, 0.20, 0.24))
-    box("M5-Bus GPIO plug envelope", (9, 10, 38), (9.5, 11.1, 46.5), connector, tab)
+
+
+def add_gpio_port(cradle, pivot, white, brass):
+    # Put the extension socket behind the tilt axis so its plug clears the M3 bore.
+    shroud = box("GPIO lower socket boss", (24, 10.1, 16), (GPIO_X, 11.4, 8), white, pivot)
+    boolean(cradle, shroud, "UNION")
+    pocket = box("GPIO plug access cutter", (18, 8, 16), (GPIO_X, GPIO_Y, 4), white, pivot)
+    boolean(cradle, pocket, "DIFFERENCE")
+
+    plastic = material("GPIO connector insulator", (0.036, 0.065, 0.075))
+    box("GPIO 2x5 header insulator", (13.6, 5.9, 2.5), (GPIO_X, GPIO_Y, 10.75), plastic, pivot)
+    for row in (-1, 1):
+        for column in range(-2, 3):
+            position = (GPIO_X + column * 2.54, GPIO_Y + row * 1.27, 7.85)
+            box("GPIO header pin", (0.64, 0.64, 3.4), position, brass, pivot, bevel=0.05)
 
 
 def set_color(material_name, color, emission=False):
@@ -253,6 +267,7 @@ def main():
         head = cylinder("M3 pivot screw head", 2.75, 2.5, (side * 79.75, *PIVOT[1:]))
         head.data.materials.append(hardware)
 
+    add_gpio_port(cradle, pivot, white, brass)
     add_tab5(pivot, device, display)
 
     for frame, angle in enumerate(TILT_ANGLES, start=1):

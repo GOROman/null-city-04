@@ -20,6 +20,10 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await page.locator('.hardware-details summary').click();
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
+  await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
+  const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
+  await gpioView.click();
+  await expect(gpioView).toHaveAttribute('aria-pressed','true');
   const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').rotation.x);
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/6,3);
   await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});

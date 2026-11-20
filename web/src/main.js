@@ -33,7 +33,7 @@ const ssaoStrength=document.querySelector('#ssao-strength');const ssaoRadius=doc
 let arcade=null;
 const environmentSources={studio03:'./environments/studio_small_03_1k.hdr',studio02:'./environments/studio_small_02_1k.hdr',neutral:'neutral'};
 const viewButtons=[...document.querySelectorAll('[data-view]')];
-const viewAngles={hero:[25,65],front:[0,90],right:[90,90],rear:[155,65],top:[0,.1]};
+const viewAngles={hero:[25,65],front:[0,90],right:[90,90],rear:[165,84],gpio:[165,106],top:[0,.1]};
 let ready=false,restTarget,restRadius,emissive=[],caseMaterials=[];
 let view='hero';
 
@@ -41,6 +41,11 @@ function frameCurrentView(){
   if(!ready)return;
   const fraction=Number(assembly.value)/100;
   const [theta,phi]=viewAngles[view];
+  if(view==='gpio'){
+    viewer.cameraOrbit=`${theta}deg ${phi}deg ${restRadius*.68}m`;
+    viewer.cameraTarget=`-0.038m ${.070+.115*fraction}m -0.096m`;
+    return;
+  }
   viewer.cameraOrbit=`${theta}deg ${phi}deg ${restRadius*(1+.45*fraction)}m`;
   viewer.cameraTarget=`${restTarget.x}m ${restTarget.y+.028*fraction}m ${restTarget.z}m`;
 }
