@@ -2,16 +2,22 @@
 
 NC-04は、M5Stack Tab5を15°後傾の固定受け皿に載せて使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5の固定クレードルと、VF2向けのUSB・BLEジョイスティックを追加しました。
 
-![白い筐体の奥にTab5を取り付けたNC-04の完成イメージ](preview-nc04.jpg)
+![白いNC-04筐体とIntelligent Stick画面のTab5を斜め正面から写した製品レンダー](preview-nc04.jpg)
 
-[3Dで見る](https://goroman.github.io/null-city-04/) · [Tab5に書き込む](firmware/README.md#ビルド書き込み) · [3Dプリント設定](PRINT_SETTINGS.md) · [背面レンダー](preview-nc04-rear.jpg)
+[3Dで見る](https://goroman.github.io/null-city-04/) · [Tab5に書き込む](firmware/README.md#ビルド書き込み) · [3Dプリント設定](PRINT_SETTINGS.md)
+
+## 外観と三面図
+
+![固定クレードルと別体の接着用固定台が見えるNC-04の背面レンダー](preview-nc04-rear.jpg)
+
+![NC-04の上面・正面・右側面を同じ縮尺で並べた三面図](docs/images/nc04-three-views.jpg)
 
 ## Tab5で遊ぶ
 
 Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、Bluetooth設定で **NULL CITY NC-04** をペアリングします。ゲーム側で、使う方のコントローラーを割り当てます。macOSではUSBとBLEの両方でジョイスティックとして認識することを確認済みです。 [書き込みと接続の手順](firmware/README.md)
 
 - **操作** — レバーは8方向。G・P・K・COIN・1Pは物理スイッチとタッチに対応し、2Pはタッチ専用です。
-- **INPUT LOG** — 新しい入力が右のログ欄の下に入ります。方向は太い矢印、ボタンは丸で表示します。押下中は塗りつぶし、解放は輪郭だけ。レバーが中央へ戻るだけの動きは省きます。画面には7件、RAMには最大64件を保持します。
+- **INPUT LOG** — 新しい入力が右のログ欄の下に入ります。方向は太い矢印、ボタンは丸で表示します。新しく押したボタンを塗りつぶしで表示します。ボタンを離すだけの入力や、レバーが中央へ戻るだけの動きは省きます。画面には7件、RAMには最大64件を保持します。
 - **RECORD / PLAY** — レバーとG・P・Kの操作を1件記録して再生できます。COIN・1P・2Pは手動入力です。
 - **VF2プリセット** — 独歩頂膝、崩撃雲身双虎掌、押している間だけの千本パンチをタッチ操作できます。 [各プリセットの使い方](firmware/README.md#vf2マクロプリセット)
 - **USB Joy Check** — Chromeで軸とボタンの反応を確認できます。**Enter download mode** で、対応ファームウェアのTab5を書き込みモードへ切り替えられます。 [ローカル起動手順](firmware/README.md#macosでのusb入力チェック)
@@ -43,6 +49,10 @@ Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、
 ## 筐体を作る
 
 H3Cで一式を新造する場合は、下ケース、上フレーム、天板、クレードル一式、脚、ライトカバーの6プレート構成です。本体はPLA、ライトカバーは乳白・半透明PLAを想定しています。 [造形配置を3Dで見る](https://goroman.github.io/null-city-04/) · [造形設定と見積もり](PRINT_SETTINGS.md)
+
+![H3Cの造形プレビュー。左プレートに上フレーム、右プレートにクレードルと固定台](docs/images/nc04-h3c-print-preview.jpg)
+
+*左は上フレーム、右はクレードルと接着用固定台。H3Cの330 × 320 mmプレートに、配布3MFの配置で表示しています。*
 
 | 部品 | データと仕様 |
 |---|---|
@@ -76,6 +86,7 @@ NC-04のBlenderモデル、部品STL、レンダーはリポジトリ直下か�
 
 ```sh
 blender --background --factory-startup --python-exit-code 1 --python NULL_CITY_NC04.py
+blender --background NULL_CITY_NC04.blend --python-exit-code 1 --python scripts/render_nc04_readme.py
 ```
 
 ## ライセンス
