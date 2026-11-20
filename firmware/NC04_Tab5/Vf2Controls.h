@@ -107,10 +107,12 @@ private:
     struct Step { uint16_t inputs; uint16_t duration; };
     static constexpr auto g = inputBit(Guard), p = inputBit(Punch), k = inputBit(Kick);
     static constexpr Step knee[] = {{g | k, 17}, {k, 50}, {0, 34}, {0, 0}};
+    // VF2 2.1 at 60 Hz: begin from neutral, press P+K around F0+7,
+    // then add a fresh Down and press P around F0+22.
     static constexpr Step akiraSpecial[] = {
-        {g | p | k, 34}, {0, 17}, {inputBit(Left), 34},
-        {inputBit(Down) | inputBit(Right) | p | k, 34}, {0, 17},
-        {inputBit(Left) | p, 34}, {0, 34}, {0, 0},
+        {0, 34}, {g | p | k, 34}, {0, 34}, {inputBit(Left), 50},
+        {inputBit(Down) | inputBit(Right) | p | k, 34}, {0, 182},
+        {inputBit(Down), 34}, {inputBit(Left) | p, 34}, {0, 34}, {0, 0},
     };
     Move selected = Knee;
     bool playing = false, right = true, rapidHeld = false;
