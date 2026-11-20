@@ -19,6 +19,8 @@ GPIO_X = -38
 GPIO_Y = 3.4
 GPIO_CABLE_START = (GPIO_X, 7.7, 3.7)
 GPIO_CABLE_ENTRY = (GPIO_X, 96, 32)
+GPIO_RIBBON_WIDTH = 12.7
+GPIO_RIBBON_THICKNESS = 0.9
 REFERENCES = ROOT / "docs" / "references" / "tab5"
 sys.path.insert(0, str(ROOT / "scripts"))
 from panel_features import prism
@@ -399,20 +401,30 @@ def anchor(name, position, parent=None):
     return empty
 
 
-def cable_curve(name, positions, finish, parent=None):
-    curve = bpy.data.curves.new(name, "CURVE")
-    curve.dimensions = "3D"
-    curve.bevel_depth = 1.25
-    curve.bevel_resolution = 3
-    curve.use_fill_caps = True
-    spline = curve.splines.new("POLY")
-    spline.points.add(len(positions) - 1)
-    for knot, point in zip(spline.points, positions):
-        knot.co = (*point, 1)
-    cable = bpy.data.objects.new(name, curve)
+def ribbon_cable(name, positions, finish, parent=None):
+    points = [Vector(position) for position in positions]
+    width = Vector((GPIO_RIBBON_WIDTH / 2, 0, 0))
+    vertices = []
+    for i, point in enumerate(points):
+        tangent = points[min(i + 1, len(points) - 1)] - points[max(i - 1, 0)]
+        depth = tangent.cross(width).normalized() * (GPIO_RIBBON_THICKNESS / 2)
+        vertices.extend((point - width - depth, point + width - depth,
+                         point + width + depth, point - width + depth))
+
+    faces = [(3, 2, 1, 0)]
+    for offset in range(0, len(vertices) - 4, 4):
+        for side in range(4):
+            current = offset + side
+            following = offset + (side + 1) % 4
+            faces.append((current, following, following + 4, current + 4))
+    faces.append(tuple(range(len(vertices) - 4, len(vertices))))
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    cable = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(cable)
     cable.parent = parent
-    curve.materials.append(finish)
+    mesh.materials.append(finish)
     return cable
 
 
@@ -426,7 +438,7 @@ def add_service_loop(start, entry, finish):
         t = i / 40
         q = 1 - t
         points.append(q**3 * p0 + 3*q*q*t * p1 + 3*q*t*t * p2 + t**3 * p3)
-    cable_curve("GPIO service loop • 30 degree reference", points, finish)
+    ribbon_cable("GPIO service loop • 30 degree reference", points, finish)
 
 
 def add_gpio_port(cradle, pivot, white, brass):
@@ -532,9 +544,9 @@ def main():
     steel_shader = hardware.node_tree.nodes["Principled BSDF"]
     steel_shader.inputs["Metallic"].default_value = 1
     steel_shader.inputs["Roughness"].default_value = 0.27
-    brass = material("M3 brass insert reference", (0.56, 0.32, 0.075))
+    brass = material("M3 gold-colored insert nuts", (0.86, 0.60, 0.18))
     brass_shader = brass.node_tree.nodes["Principled BSDF"]
-    brass_shader.inputs["Metallic"].default_value = 0.88
+    brass_shader.inputs["Metallic"].default_value = 0.92
     brass_shader.inputs["Roughness"].default_value = 0.3
     accent = material("Decal • cyan ink", (0.008, 0.48, 0.72))
     set_color("Purple balltop", (0.012, 0.19, 0.53))
@@ -588,9 +600,11 @@ def main():
 
     guides = add_snap_guides(cradle, pivot, white)
     add_gpio_port(cradle, pivot, white, brass)
-    harness = material("GPIO cable jacket", (0.023, 0.065, 0.082))
-    cable_curve("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
+    harness = material("GPIO flat ribbon jacket", (0.19, 0.22, 0.25))
+    ribbon_cable("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
     gpio_start = anchor("GpioCableStart", GPIO_CABLE_START, pivot)
+    gpio_start["ribbon_width_mm"] = GPIO_RIBBON_WIDTH
+    gpio_start["ribbon_thickness_mm"] = GPIO_RIBBON_THICKNESS
     gpio_entry = anchor("GpioCableEntry", GPIO_CABLE_ENTRY)
     add_tab5_retention(cradle, pivot, hardware)
     add_tab5(pivot, device, display, brass)

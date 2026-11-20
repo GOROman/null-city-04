@@ -26,9 +26,18 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect(gpioView).toHaveAttribute('aria-pressed','true');
   const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').rotation.x);
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/6,3);
+  const ribbonStart=()=>page.locator('#viewer').evaluate(v=>{
+    const points=v.arcade.scene.getObjectByName('GPIO flat ribbon service loop')?.geometry.getAttribute('position');
+    return points&&{width:points.getX(1)-points.getX(0),depth:Math.hypot(
+      points.getY(2)-points.getY(1),points.getZ(2)-points.getZ(1)),start:points.getY(0)};
+  });
+  await expect.poll(async()=> (await ribbonStart())?.width).toBeCloseTo(12.7,3);
+  const initialCable=await ribbonStart();
+  expect(initialCable.depth).toBeCloseTo(.9,3);
   await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#tab5-tilt-value')).toHaveText('45°');
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
+  expect((await ribbonStart()).start).not.toBeCloseTo(initialCable.start,2);
   await page.locator('#viewer').focus();
   for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
     await page.keyboard.press(key);
@@ -45,6 +54,20 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   const pose=await page.locator('#viewer').evaluate(v=>({time:v.currentTime,duration:v.duration}));
   expect(pose.time).toBeGreaterThan(.9*pose.duration);
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
+  await page.locator('#assembly').evaluate(e=>{e.value='200';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  await expect(page.locator('#assembly-value')).toHaveText('造形配置');
+  await expect(page.locator('#print-plate option')).toHaveCount(6);
+  await page.locator('#print-plate').selectOption('3');
+  await expect(page.locator('#load-status')).toHaveText('造形配置 · プレート 4');
+  const plate=await page.locator('#viewer').evaluate(v=>{
+    const group=v.arcade.scene.getObjectByName('NC04PrintPlate');
+    const tablet=v.arcade.scene.getObjectByName('Tab5TiltPivot');
+    return {parts:group.userData.partCount,tabletVisible:tablet.visible};
+  });
+  expect(plate).toEqual({parts:3,tabletVisible:false});
+  await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  await expect(page.locator('#print-plate-controls')).toBeHidden();
+  expect(await page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').visible)).toBe(true);
   await page.locator('#led').uncheck({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.filter(m=>m.name!=='Tab5 HUD display').every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
   await page.locator('#transparent').check({force:true});

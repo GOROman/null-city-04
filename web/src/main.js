@@ -2,8 +2,9 @@ import '@google/model-viewer';
 import '@google/model-viewer-effects';
 import {Arcade} from './arcade.js';
 import {EnvironmentRotationPass} from './environment-pass.js';
-import {CanvasTexture, CubicBezierCurve3, Mesh, MeshStandardMaterial, SRGBColorSpace, TubeGeometry, Vector3} from 'three';
+import {BufferGeometry, CanvasTexture, CubicBezierCurve3, Float32BufferAttribute, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3} from 'three';
 import {drawTab5} from './tab5-display.js';
+import {buildPlate, disposePlate, plates} from './print-layout.js';
 import './style.css';
 
 const viewer=document.querySelector('#viewer');
@@ -11,6 +12,11 @@ const controls=document.querySelector('#model-controls');
 const stage=document.querySelector('.stage');
 const status=document.querySelector('#load-status');
 const assembly=document.querySelector('#assembly');
+const plateControls=document.querySelector('#print-plate-controls');
+const plateSelect=document.querySelector('#print-plate');
+plates.forEach(({name},index)=>plateSelect.add(new Option(`${index+1} · ${name}`,String(index))));
+let printMode=false, printPlate, plateRequest=0, assemblyVisibility=new Map();
+let printAngle=[25,35];
 const tilt=document.querySelector('#tab5-tilt');
 const exposure=document.querySelector('#exposure');
 const environmentStrength=document.querySelector('#environment-strength');
@@ -52,6 +58,13 @@ let view='hero';
 
 function frameCurrentView(){
   if(!ready)return;
+  if(printMode){
+    const [theta,phi]=printAngle;
+    const distance=innerWidth<700?1.25:1.16;
+    viewer.cameraOrbit=`${theta}deg ${phi}deg ${distance}m`;
+    viewer.cameraTarget='0m 0m 0m';
+    return;
+  }
   const fraction=Number(assembly.value)/100;
   const [theta,phi]=viewAngles[view];
   if(view==='gpio'){
@@ -63,16 +76,63 @@ function frameCurrentView(){
   viewer.cameraTarget=`${restTarget.x}m ${restTarget.y+.028*fraction}m ${restTarget.z}m`;
 }
 function setView(name){
-  view=name;
-  viewButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));
+  if(printMode)printAngle=viewAngles[name];
+  else view=name;
+  viewButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===name)));
   frameCurrentView();
 }
+async function renderPrintPlate(){
+  const request=++plateRequest;
+  if(printPlate){disposePlate(printPlate);printPlate=null;}
+  status.textContent='造形プレートを読み込み中…';
+  try{
+    const group=await buildPlate(Number(plateSelect.value));
+    if(!printMode||request!==plateRequest){disposePlate(group);return;}
+    const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
+    if(!root){disposePlate(group);return;}
+    printPlate=group;
+    root.add(group);
+    status.textContent=`造形配置 · プレート ${Number(plateSelect.value)+1}`;
+    environmentPass.scene.queueShadowRender?.();
+    composer.queueRender();
+  }catch{
+    if(printMode&&request===plateRequest)status.textContent='造形プレートを読み込めませんでした';
+  }
+}
+function setPrintMode(active){
+  if(printMode===active)return;
+  printMode=active;
+  plateControls.hidden=!active;
+  stage.dataset.print=String(active);
+  viewer.maxCameraOrbit=active?'auto 170deg 3m':'auto 170deg 250%';
+  const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
+  if(active&&root){
+    printAngle=[25,35];
+    assemblyVisibility=new Map(root.children.map(child=>[child,child.visible]));
+    for(const child of assemblyVisibility.keys())child.visible=false;
+    renderPrintPlate();
+  }else if(!active){
+    ++plateRequest;
+    if(printPlate){disposePlate(printPlate);printPlate=null;}
+    for(const [child,visible] of assemblyVisibility)child.visible=visible;
+    assemblyVisibility.clear();
+    status.textContent='ドラッグして操作できます';
+    viewButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));
+  }
+  environmentPass.scene?.queueShadowRender?.();
+  composer.queueRender();
+}
 function setAssembly(){
-  const fraction=Number(assembly.value)/100;
-  document.querySelector('#assembly-value').value=`${assembly.value}%`;
+  const value=Number(assembly.value);
+  const fraction=Math.min(1,value/100);
+  const printing=value>100;
+  const output=printing?'造形配置':`${value}%`;
+  document.querySelector('#assembly-value').value=output;
+  assembly.setAttribute('aria-valuetext',printing?output:`分解 ${output}`);
   if(!ready)return;
   if(fraction>0&&arcade?.active){playMode.checked=false;setPlayMode();}
   viewer.pause();viewer.currentTime=Math.min(viewer.duration-.0001,Math.max(0,viewer.duration*fraction));
+  setPrintMode(printing);
   frameCurrentView();
   updateGpioLoop();
 }
@@ -87,6 +147,32 @@ function setTilt(){
   environmentPass.scene.queueShadowRender?.();
   composer.queueRender();
 }
+function ribbonGeometry(curve,width,thickness){
+  const divisions=40;
+  const positions=[];
+  const indices=[3,2,1,3,1,0];
+  const across=new Vector3(width/2,0,0);
+  for(let step=0;step<=divisions;step++){
+    const point=curve.getPoint(step/divisions);
+    const depth=curve.getTangent(step/divisions).cross(across).normalize().multiplyScalar(thickness/2);
+    for(const [side,face] of [[-1,-1],[1,-1],[1,1],[-1,1]]){
+      positions.push(...point.clone().addScaledVector(across,side).addScaledVector(depth,face));
+    }
+    if(step===divisions)continue;
+    const offset=step*4;
+    for(let side=0;side<4;side++){
+      const a=offset+side, b=offset+(side+1)%4;
+      indices.push(a,b,b+4,a,b+4,a+4);
+    }
+  }
+  const end=divisions*4;
+  indices.push(end,end+1,end+2,end,end+2,end+3);
+  const geometry=new BufferGeometry();
+  geometry.setAttribute('position',new Float32BufferAttribute(positions,3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
 function updateGpioLoop(){
   const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
   const moving=root?.getObjectByName('GpioCableStart');
@@ -100,11 +186,12 @@ function updateGpioLoop(){
   const to=root.worldToLocal(fixed.getWorldPosition(new Vector3()));
   const curve=new CubicBezierCurve3(from,from.clone().add(new Vector3(0,-4,-24)),
     to.clone().add(new Vector3(0,0,-22)),to);
-  const geometry=new TubeGeometry(curve,40,1.25,8,false);
+  const geometry=ribbonGeometry(curve,moving.userData.ribbon_width_mm,moving.userData.ribbon_thickness_mm);
   if(!gpioLoop||gpioLoop.parent!==root){
     gpioLoop?.geometry.dispose();
     gpioLoop?.material.dispose();
-    gpioLoop=new Mesh(geometry,new MeshStandardMaterial({color:0x214654,roughness:.68}));
+    gpioLoop=new Mesh(geometry,new MeshStandardMaterial({color:0x7a8189,roughness:.68}));
+    gpioLoop.name='GPIO flat ribbon service loop';
     root.add(gpioLoop);
   }else{
     gpioLoop.geometry.dispose();
@@ -255,7 +342,7 @@ function reportInput({buttons,x,y}){
 viewer.addEventListener('environment-change',()=>{
   requestAnimationFrame(()=>{
     setEnvironmentAngle();stage.dataset.environmentLoading='false';stage.dataset.environment=environment.value;
-    if(ready)status.textContent='ドラッグして操作できます';
+    if(ready&&!printMode)status.textContent='ドラッグして操作できます';
   });
 });
 function reset(){
@@ -263,7 +350,7 @@ function reset(){
   turbo.checked=false;macro.value='UIO';arcade?.setTurbo(false);refreshTab5();
   rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
   backgroundColor.value='#e9e9e7';grid.checked=true;ssaoStrength.value='1.2';ssaoRadius.value='5';
-  assembly.value='0';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
+  assembly.value='0';plateSelect.value='0';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
   environment.value='studio03';environmentAngle.value='90';background.checked=false;ssaoEnabled.checked=true;
   setAssembly();setTilt();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
   viewer.resetTurntableRotation(0);setEnvironment();setSSAO();setRGB();setBackgroundColor(false);
@@ -292,6 +379,7 @@ runMacroButton.addEventListener('click',runMacro);
 window.addEventListener('blur',stopMacro);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMacro();});
 assembly.addEventListener('input',setAssembly);
+plateSelect.addEventListener('change',()=>{if(printMode)renderPrintPlate();});
 tilt.addEventListener('input',setTilt);
 exposure.addEventListener('input',setExposure);
 environmentStrength.addEventListener('input',setEnvironmentStrength);

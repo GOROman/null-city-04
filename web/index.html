@@ -49,8 +49,13 @@
             </div>
           </div>
           <div class="range-heading"><label for="assembly">分解して構造を見る</label><output id="assembly-value" for="assembly">0%</output></div>
-          <input id="assembly" name="assembly" type="range" min="0" max="100" value="0" aria-describedby="assembly-help" aria-keyshortcuts="Space">
-          <div class="range-labels" id="assembly-help"><span>組立</span><span>Space で切替</span><span>分解</span></div>
+          <input id="assembly" name="assembly" type="range" min="0" max="200" value="0" aria-describedby="assembly-help" aria-keyshortcuts="Space">
+          <div class="range-labels" id="assembly-help"><span>組立</span><span>分解</span><span>造形配置</span></div>
+          <div class="print-plate-controls" id="print-plate-controls" hidden>
+            <label class="environment-label" for="print-plate">H3C 造形プレート</label>
+            <select id="print-plate"></select>
+            <p>330 × 320 mm の配置プレビューです。Space で組立に戻れます。</p>
+          </div>
           <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
           <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
           <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
@@ -64,11 +69,11 @@
               <dt>通し穴 / 下穴</dt><dd>Ø3.4 mm / Ø4.0 mm（暫定）</dd>
               <dt>Tab5 ガイド</dt><dd>左右共通のスナップ式 × 2</dd>
               <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・前後各0.8 mm</dd>
-              <dt>GPIO</dt><dd>下向き 2 × 5 ピン（2.54 mm ピッチ）、Tab5 Ext.Port1 に直結</dd>
+              <dt>GPIO</dt><dd>下向き 2 × 5 ピン（2.54 mm ピッチ）、10芯フラットケーブル</dd>
               <dt>造形材</dt><dd>PLA（ライトカバーは乳白・半透明 PLA）</dd>
             </dl>
             <button type="button" class="hardware-view" data-view="gpio" aria-pressed="false">下側の GPIO 端子を見る</button>
-            <p>分解表示で天板のねじ、チルト軸、Tab5 の抜け止めと真鍮のインサートナットを確認できます。手持ちのボタンとレバーを流用し、筐体まわりは PLA でサポートなしの造形を想定しています。</p>
+            <p>分解表示で天板のねじ、チルト軸、Tab5 の抜け止めと金色のインサートナットを確認できます。手持ちのボタンとレバーを流用し、筐体まわりは PLA でサポートなしの造形を想定しています。</p>
           </details>
           <label class="toggle-row"><span>ケースを透かす</span><input id="transparent" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row rotate-toggle"><span>自動で回転</span><input id="rotate" type="checkbox"><span class="switch" aria-hidden="true"></span></label>

@@ -49,3 +49,7 @@
 
 .macro-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
 .macro-row button { white-space: nowrap; }
+
+.print-plate-controls { margin: 12px 0; }
+.print-plate-controls[hidden] { display: none; }
+.print-plate-controls p { color: var(--muted); font-size: 10px; line-height: 1.6; }

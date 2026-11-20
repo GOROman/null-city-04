@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'web/**'
+      - 'STL/**'
+      - 'print/h3c/machine.json'
       - '.github/workflows/pages.yml'
       - 'NULL_CITY_NC04.*'
       - 'artwork/**'
@@ -18,6 +20,8 @@ on:
   pull_request:
     paths:
       - 'web/**'
+      - 'STL/**'
+      - 'print/h3c/machine.json'
       - '.github/workflows/pages.yml'
       - 'NULL_CITY_NC04.*'
       - 'artwork/**'
