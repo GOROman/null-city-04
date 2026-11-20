@@ -5,13 +5,10 @@ export const bed = {width: 330, depth: 320};
 
 export const plates = [
   {name: '下ケース', seconds: 25751, parts: [['NC04_01_lower_tray', 0, 0]]},
-  {name: '上フレーム', seconds: 12141, parts: [['NC04_02_upper_frame', 0, 0]]},
+  {name: '上フレーム', seconds: 12190, parts: [['NC04_02_upper_frame', 0, 0]]},
   {name: '天板', seconds: 15199, parts: [['NC04_03_control_panel', 0, 0]]},
-  {name: 'Tab5 クレードル・スナップガイド', seconds: 3740, parts: [
-    ['NC04_04_tab5_cradle', 0, -24], ['NC04_05_tab5_snap_guide', -22, 31], ['NC04_05_tab5_snap_guide', 22, 31],
-    ['NC04_07_hinge_snap_pin', -40, 63], ['NC04_07_hinge_snap_pin', -16, 63],
-    ['NC04_08_hinge_c_clip', 16, 63], ['NC04_08_hinge_c_clip', 40, 63],
-    ['NC04_09_hinge_snap_bearing', -57, -78], ['NC04_09_hinge_snap_bearing', 57, -78],
+  {name: 'Tab5 クレードル・チルトピン', seconds: 3557, parts: [
+    ['NC04_04_tab5_cradle', 0, -24], ['NC04_10_tilt_axle', -20, 24], ['NC04_11_tilt_index_pin', 20, 24],
   ]},
   {name: '脚', seconds: 1117, parts: [
     ['PRINT_TPU_foot_-113_-66', -27, -27], ['PRINT_TPU_foot_-113_66', -27, 27],

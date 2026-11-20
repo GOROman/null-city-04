@@ -24,15 +24,9 @@ def displacement(name):
     if name.startswith('NC04 upper frame'):return (0,0,32)
     if name=='Tab5TiltPivot':return (0,0,115)
     if name=='GpioCableEntry':return (0,0,32)
-    if name.startswith('PRINT snap-in hinge bearing'):return (0,0,70)
-    if name.startswith('PRINT hinge snap pin'):
-        return (35 if bpy.data.objects[name].location.x>0 else -35,0,45)
-    if name.startswith('PRINT hinge C-clip'):
-        return (0,0,70)
+    if name.startswith(('PRINT central tilt axle', 'PRINT tilt index pin')):return (-55,0,32)
     if name.startswith('M5Stack Tab5'):return (0,0,52)
-    if name.startswith('Tab5 snap-in guide'):return (0,0,25)
     if name.startswith(('GPIO 2x5 plug', 'GPIO header pin', 'Ext.Port1 plug tail')):return (0,7,-15)
-    if name.startswith(('Tab5 M3 flat washer', 'Tab5 rear M3x8 screw')):return (0,26,0)
     if name.startswith('Deck M3x40 screw'):return (0,0,104)
     if name.startswith('Deck M3 insert'):return (0,0,13)
     if name.startswith('Flush cyan pinstripe'):return (0,0,70)

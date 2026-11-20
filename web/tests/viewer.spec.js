@@ -14,7 +14,7 @@ async function load(page,{freezeRGB=true}={}){
 test('PBR model, meter scale, artwork, camera and assembly controls',async({page},testInfo)=>{
   const errors=await load(page);
   const model=await page.locator('#viewer').evaluate(v=>({size:v.getDimensions(),animations:v.availableAnimations,materials:v.model.materials.map(m=>m.name)}));
-  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2234,3);
+  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2224,3);
   expect(model.animations).toEqual(['Assembly']);
   expect(model.materials).toContain('Tab5 rear • M5Stack reference photograph');
   await page.locator('.hardware-details summary').click();
@@ -64,7 +64,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     return {plates:groups.length,parts:groups.reduce((n,group)=>n+group.userData.partCount,0),
       positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
   });
-  expect(overview).toEqual({plates:6,parts:21,positions:6});
+  expect(overview).toEqual({plates:6,parts:13,positions:6});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
   await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
   await page.locator('#print-plate').selectOption('3');
@@ -74,9 +74,9 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     const tablet=v.arcade.scene.getObjectByName('Tab5TiltPivot');
     return {parts:group.userData.partCount,tabletVisible:tablet.visible};
   });
-  expect(plate).toEqual({parts:9,tabletVisible:false});
+  expect(plate).toEqual({parts:3,tabletVisible:false});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(1);
-  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約1時間1分');
+  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約59分');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#print-plate-controls')).toBeHidden();
   await expect(page.locator('#print-annotations')).toBeHidden();

@@ -18,7 +18,7 @@ SIDE_CLEARANCE = 0.7
 TAB5_REAR_M3_X = (-60, 60)
 TAB5_REAR_M3_Z = 10.45
 TAB5_REAR_INSERT_Y = 5.68
-PIVOT = (0, 80, 67)
+PIVOT = (0, 79, 73)
 GPIO_X = -38
 GPIO_Y = 3.4
 GPIO_CABLE_START = (GPIO_X, 7.7, 3.7)
@@ -260,31 +260,19 @@ def lighten_upper_frame(frame, white):
     boolean(frame, cutter, "DIFFERENCE")
 
 
-def add_snap_in_bearings(frame, white):
-    # The shoulder and latch share one side face so the entire part prints flat.
-    profile = [(89.35, 31.1), (90.30, 31.1), (91.25, 32.5), (91.25, 33.56),
-               (90.45, 33.56), (90.45, 47.12), (91.30, 47.12), (92.2, 48.2), (93.7, 50.5),
-               (86, 72), (79, 75), (73, 73), (71, 70), (76, 64), (82, 58),
-               (87, 53), (89.5, 50.8), (89.25, 47.1), (88.95, 46.6)]
-    to_world = Matrix(((0, 0, 1, 0), (1, 0, 0, 0),
-                       (0, 1, 0, 0), (0, 0, 0, 1)))
-    bearings = []
-    for x in (-76, 76):
-        slot = box("Bearing vertical socket", (9.4, 2.1, 19),
-                   (x, 89.75, 39.5), white, bevel=0)
-        boolean(frame, slot, "DIFFERENCE")
-        release = box("Bearing rear release window", (9.8, 6.1, 3.2),
-                      (x, 92.75, 32.4), white, bevel=0)
-        boolean(frame, release, "DIFFERENCE")
-
-        bearing = prism("PRINT snap-in hinge bearing", profile, x - 4.5, x + 4.5, white)
-        bearing.data.transform(to_world)
-        bore(bearing, 3.2, 11, (x, *PIVOT[1:]))
-        bearings.append(bearing)
+def add_center_fork(frame, white):
+    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    profile = [(88, 38), (94.4, 38), (94.4, 61), (96, 65), (85, 75),
+               (81, 78), (76, 78), (73, 75), (74, 70), (82, 59)]
+    for x in (-18.2, 18.2):
+        cheek = prism("Central tilt fork cheek", profile, x - 2.7, x + 2.7, white)
+        cheek.data.transform(axes)
+        boolean(frame, cheek, "UNION")
+        bore(frame, 3.2, 5.8, (x, *PIVOT[1:]))
+        bore(frame, 1.65, 5.8, (x, PIVOT[1] + 12, PIVOT[2] - 14))
     feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
     boolean(frame, feedthrough, "DIFFERENCE")
-    frame.name = "NC04 upper frame • snap-in bearing sockets"
-    return bearings
+    frame.name = "NC04 upper frame • central tilt fork"
 
 
 def add_tab5(pivot, case, glass, brass):
@@ -382,132 +370,62 @@ def add_deck_hardware(tray, upper, panel, hardware, brass):
             head.data.materials.append(hardware)
 
 
-def make_hinge_pin(finish):
-    # Profile runs from the outside head toward the end that enters the cradle.
-    profile = [(0, 4.2), (.3, 4.4), (1.7, 4.4), (1.7, 3), (10.2, 3),
-               (10.85, 2.35), (13.05, 2.35), (13.70, 3), (20.2, 3), (20.6, 2.6)]
-    segments = 48
-    vertices = [(radius*cos(2*pi*i/segments), radius*sin(2*pi*i/segments), height)
-                for height,radius in profile for i in range(segments)]
-    faces = [tuple(reversed(range(segments)))]
-    for layer in range(len(profile)-1):
-        offset=layer*segments
-        for i in range(segments):
-            start=offset+i
-            end=offset+(i+1)%segments
-            faces.append((start,end,end+segments,start+segments))
-    faces.append(tuple(range(len(vertices)-segments,len(vertices))))
-    return hinge_mesh("PRINT hinge snap pin", vertices, faces, finish)
+def mounting_pin(name, radius, length, location, white):
+    pin = cylinder(name, radius, length, (0, 0, 0), axis="Z")
+    pin.data.materials.append(white)
+    head = cylinder("Pin head", radius + 1.6, 2, (0, 0, -length / 2 + 0.9), axis="Z")
+    boolean(pin, head, "UNION")
+    # A split tapered tip flexes through the bore and latches past the cheek.
+    bpy.ops.mesh.primitive_cone_add(vertices=48, radius1=radius + .30, radius2=radius - .25,
+                                   depth=2.2, location=(0, 0, length / 2 - .8))
+    tip = bpy.context.object
+    boolean(pin, tip, "UNION")
+    slot = box("Split tip relief", (radius * 3, .8, 6), (0, 0, length / 2 - 2.0), white, bevel=0)
+    boolean(pin, slot, "DIFFERENCE")
+    pin.rotation_euler.y = radians(90)
+    pin.location = location
+    return pin
 
 
-def make_hinge_clip(finish):
-    segments=44
-    start=radians(55)
-    vertices=[]
-    for step in range(segments+1):
-        angle=start+(2*pi-2*start)*step/segments
-        for radius,z in ((2.5,0),(4.6,0),(4.6,2.0),(2.5,2.0)):
-            vertices.append((radius*cos(angle),radius*sin(angle),z))
-    faces=[(3,2,1,0)]
-    for step in range(segments):
-        offset=step*4
-        for i in range(4):
-            a=offset+i
-            b=offset+(i+1)%4
-            faces.append((a,b,b+4,a+4))
-    faces.append(tuple(range(len(vertices)-4,len(vertices))))
-    return hinge_mesh("PRINT hinge C-clip", vertices, faces, finish)
-
-
-def hinge_mesh(name, vertices, faces, finish):
-    mesh=bpy.data.meshes.new(name)
-    mesh.from_pydata(vertices,[],faces)
-    solid=bmesh.new()
-    solid.from_mesh(mesh)
-    bmesh.ops.recalc_face_normals(solid,faces=list(solid.faces))
-    solid.to_mesh(mesh)
-    solid.free()
-    part=bpy.data.objects.new(name,mesh)
-    bpy.context.collection.objects.link(part)
-    mesh.materials.append(finish)
-    return part
-
-
-def add_snap_hinge(cradle, pivot, finish):
-    parts=[]
-    for side in (-1,1):
-        bore(cradle,3.2,8,(side*65.45,0,0),pivot)
-        pin=make_hinge_pin(finish)
-        pin.location=(side*82.28,*PIVOT[1:])
-        pin.rotation_euler.y=radians(-90*side)
-        clip=make_hinge_clip(finish)
-        # The opening faces down for installation from above after the pin is seated.
-        clip.rotation_euler=Matrix(((0,0,side),(0,side,0),(-1,0,0))).to_euler()
-        clip.location=(side*69.25,*PIVOT[1:])
-        parts.append((pin,clip))
-    return parts[-1]
-
-
-def add_snap_guides(cradle, pivot, white):
-    guides = []
-    yz_to_xyz = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+def cradle_tray(pivot, white):
+    cradle = box("White moving cradle", (135, 15, 9), (0, 0, 0), white, pivot, bevel=0)
     for side in (-1, 1):
-        guide = box("Tab5 snap-in guide", (3.2, 17.6, 12.4),
-                    (side * 66.3, 0, 12.7), white, pivot, bevel=0.35)
+        seat = box("Integral lower seat", (24, 16, 3.4), (side * 54, 0, 4.65), white, pivot, bevel=0)
+        boolean(cradle, seat, "UNION")
+        rim = box("Integral side stop", (2.6, 15.6, 8.5), (side * 65.9, 0, 7.8), white, pivot, bevel=0)
+        boolean(cradle, rim, "UNION")
+        lip = box("Integral front lip", (19, 2.0, 6), (side * 55, -7.4, 6.5), white, pivot, bevel=0)
+        boolean(cradle, lip, "UNION")
 
-        # The tongue and rail share their outside print face. Offset the tongue
-        # toward the front so the cutout clears the M3 tilt screw.
-        profile = [(-1.5, 6.95), (0, 6.95), (0, -3.8), (0.95, -5.25),
-                   (0.35, -6.7), (-1.5, -6.7)]
-        profile = [(y - 4.4, z) for y, z in profile]
-        ends = sorted((side * 64.9, side * 67.9))
-        tongue = prism("Guide snap tongue", profile, *ends, white)
-        tongue.data.transform(yz_to_xyz)
-        tongue.parent = pivot
-        boolean(guide, tongue, "UNION")
+    # Two flat pads leave room behind the center of the tablet and accept
+    # thin double-sided tape. The lower seat carries the tablet's weight.
+    for x in (-45, 45):
+        pad = box("Tab5 adhesive land", (23, 3.2, 21), (x, 8.2, 14.25), white, pivot, bevel=0)
+        boolean(cradle, pad, "UNION")
 
-        slot = box("Snap tongue slot cutter", (3.4, 2.8, 15),
-                   (side * 66.4, -5.35, 0.0), white, pivot, bevel=0.1)
-        boolean(cradle, slot, "DIFFERENCE")
-        guides.append(guide)
-    return guides
+    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    # The indexed sector turns with the cradle. A second unthreaded pin
+    # is withdrawn to change the angle, then fitted through one index hole.
+    sector = prism("Central indexed tilt sector",
+                   [(-4, -4), (7, -9), (14, -12), (20.5, -10),
+                    (22, 1), (19, 4), (10, 4), (5, 4)],
+                   -14.9, 14.9, white)
+    sector.data.transform(axes)
+    sector.parent = pivot
+    boolean(cradle, sector, "UNION")
+    bore(cradle, 3.2, 32, (0, 0, 0), pivot)
+    for angle in TILT_ANGLES:
+        center = Matrix.Rotation(radians(angle), 3, "X") @ Vector((0, 12, -14))
+        bore(cradle, 1.65, 32, center, pivot)
 
-
-def add_tab5_retention(cradle, pivot, white, hardware):
-    inner_y, outer_y = 6.4, 10.4
-    washer_thickness = 0.5
-    screw_length = 8
-    z = TAB5_REAR_M3_Z
-    # The rear ears overlap the seat and leave a flat washer land around each
-    # through-hole. A 45-degree roof keeps the horizontal holes self-supporting.
-    axes = Matrix(((1, 0, 0, 0), (0, 0, -1, 0),
-                   (0, 1, 0, 0), (0, 0, 0, 1)))
-    radius = 1.75
-    angles = [radians(135 + step * 7.5) for step in range(37)]
-    for x in TAB5_REAR_M3_X:
-        ear = box("Tab5 rear mounting ear", (10.4, outer_y - inner_y, 12.8),
-                  (x, (inner_y + outer_y) / 2, 10), white, pivot, bevel=0)
-        boolean(cradle, ear, "UNION")
-        profile = [(x + radius*cos(a), z + radius*sin(a)) for a in angles]
-        profile.append((x, z + sqrt(2)*radius))
-        clearance = prism("Support-free M3 clearance", profile, -outer_y - 0.2,
-                          -inner_y + 0.2, white)
-        clearance.data.transform(axes)
-        clearance.parent = pivot
-        boolean(cradle, clearance, "DIFFERENCE")
-
-        washer_y = outer_y + washer_thickness / 2
-        washer = cylinder("Tab5 M3 flat washer", 3.5, washer_thickness,
-                          (x, washer_y, z), pivot, axis="Y")
-        bore(washer, 1.6, 1, (x, washer_y, z), pivot, axis="Y")
-        washer.data.materials.append(hardware)
-        bearing_y = outer_y + washer_thickness
-        screw = cylinder("Tab5 rear M3x8 screw shank", 1.5, screw_length,
-                         (x, bearing_y - screw_length / 2, z), pivot, axis="Y")
-        screw.data.materials.append(hardware)
-        head = cylinder("Tab5 rear M3x8 screw head", 2.75, 2,
-                        (x, bearing_y + 1, z), pivot, axis="Y")
-        head.data.materials.append(hardware)
+    # Make room for the stationary fork across the cradle's tilt range.
+    for x in (-18.2, 18.2):
+        relief = box("Fork clearance", (12.8, 22, 16), (x, 4, -2.4), white, pivot, bevel=0)
+        boolean(cradle, relief, "DIFFERENCE")
+    # Tie the two outer seats across the pivot cheek clearances.
+    bridge = box("Upper seat bridge", (125, 2.2, 3.1), (0, -7.75, 4.8), white, pivot, bevel=0)
+    boolean(cradle, bridge, "UNION")
+    return cradle
 
 
 def anchor(name, position, parent=None):
@@ -683,7 +601,7 @@ def main():
     expose_led_openings()
     finish_deck_edges(panel, white)
     lighten_upper_frame(upper, white)
-    hinge_bearings = add_snap_in_bearings(upper, white)
+    add_center_fork(upper, white)
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
     tray = bpy.data.objects["PRINT_01_lower_tray"]
     diffusers = level_side_lighting(tray, white)
@@ -699,16 +617,9 @@ def main():
     pivot = bpy.data.objects.new("Tab5 removable cradle • tilt pivot", None)
     bpy.context.collection.objects.link(pivot)
     pivot.location = PIVOT
-    cradle = box("White moving cradle", (138, 15, 10), (0, 0, 0), white, pivot, bevel=1.3)
-    for side in (-1, 1):
-        rails = (
-            box("Lower seat", (27, 16, 3), (side * 55, 0, 5), white, pivot),
-            box("Front retaining lip", (4.5, 2.4, 10), (side * 61.7, -8.0, 10), white, pivot),
-        )
-        for rail in rails:
-            boolean(cradle, rail, "UNION")
-    hinge_pin, hinge_clip = add_snap_hinge(cradle, pivot, white)
-    guides = add_snap_guides(cradle, pivot, white)
+    cradle = cradle_tray(pivot, white)
+    hinge_pin = mounting_pin("PRINT central tilt axle", 2.95, 46, (0, *PIVOT[1:]), white)
+    angle_pin = mounting_pin("PRINT tilt index pin", 1.48, 46, (0, PIVOT[1] + 12, PIVOT[2] - 14), white)
     add_gpio_port(cradle, pivot, white, brass)
     harness = material("GPIO flat ribbon jacket", (0.19, 0.22, 0.25))
     ribbon_cable("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
@@ -716,7 +627,6 @@ def main():
     gpio_start["ribbon_width_mm"] = GPIO_RIBBON_WIDTH
     gpio_start["ribbon_thickness_mm"] = GPIO_RIBBON_THICKNESS
     gpio_entry = anchor("GpioCableEntry", GPIO_CABLE_ENTRY)
-    add_tab5_retention(cradle, pivot, white, hardware)
     add_tab5(pivot, device, display, brass)
     for part, filename in (
         (tray, "NC04_01_lower_tray.stl"),
@@ -725,11 +635,8 @@ def main():
         (cradle, "NC04_04_tab5_cradle.stl"),
     ):
         export_print_part(part, filename)
-    export_print_part(guides[1], "NC04_05_tab5_snap_guide.stl", Matrix.Rotation(radians(90), 4, "Y"))
-    export_print_part(hinge_pin, "NC04_07_hinge_snap_pin.stl")
-    export_print_part(hinge_clip, "NC04_08_hinge_c_clip.stl")
-    export_print_part(hinge_bearings[1], "NC04_09_hinge_snap_bearing.stl",
-                      Matrix.Rotation(radians(90), 4, "Y"))
+    export_print_part(hinge_pin, "NC04_10_tilt_axle.stl")
+    export_print_part(angle_pin, "NC04_11_tilt_index_pin.stl")
     for diffuser in diffusers:
         side = "left" if "left" in diffuser.name else "right"
         export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")

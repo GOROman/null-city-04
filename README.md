@@ -1,6 +1,6 @@
 # NULL CITY IV / NC-04
 
-NC-04は、M5Stack Tab5を差し込んで使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5のチルト機構と、VF2向けのUSB・BLEジョイスティックを追加しました。
+NC-04は、M5Stack Tab5をチルト付きの受け皿に載せて使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5のチルト機構と、VF2向けのUSB・BLEジョイスティックを追加しました。
 
 ![白い筐体の奥にTab5を取り付けたNC-04の完成イメージ](preview-nc04.jpg)
 
@@ -47,22 +47,22 @@ H3Cで一式を新造する場合は、下ケース、上フレーム、天板�
 | 部品 | データと仕様 |
 |---|---|
 | 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
-| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [H3C用3MF](print/h3c/NC04-upper-frame-supertack.3mf) · SuperTack、0.8 mm高流量、積層0.32 mm、準備込み約1時間4分 |
+| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [中央チルト版3MF](print/h3c/NC04-center-tilt-frame-08hf-supertack.3mf) · SuperTack、0.8 mm高流量、積層0.32 mm、CLI見積もり約1時間6分 |
 | 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
-| クレードル一式 | [H3C用3MF](print/h3c/NC04-cradle-04-supertack.3mf) · 9点、SuperTack、0.4 mm標準、積層0.20 mm、準備込み約1時間 |
-| クレードル一式の個別STL | [クレードル](STL/NC04_04_tab5_cradle.stl) ×1、[ガイド](STL/NC04_05_tab5_snap_guide.stl)・[軸受け](STL/NC04_09_hinge_snap_bearing.stl)・[軸ピン](STL/NC04_07_hinge_snap_pin.stl)・[Cクリップ](STL/NC04_08_hinge_c_clip.stl) 各×2 |
+| クレードル一式 | [中央チルト版3MF](print/h3c/NC04-center-tilt-cradle-04-supertack.3mf) · 3点、SuperTack、0.4 mm標準、積層0.20 mm、CLI見積もり約59分 |
+| クレードル一式の個別STL | [受け皿](STL/NC04_04_tab5_cradle.stl)・[主軸ピン](STL/NC04_10_tilt_axle.stl)・[角度ピン](STL/NC04_11_tilt_index_pin.stl) 各1個 |
 | ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
-上フレームは造形完了を確認済みです。クレードル一式はH3Cで造形準備まで確認しました。下ケースの実機造形、クレードルの完成と嵌合、配線した状態でのチルトは未確認です。
+中央チルト版は**新しい上フレーム**と組にして使用します。既存の左右差し込み軸受け版の上フレームとは接合寸法が異なります。CADで15〜45°の干渉と3か所のピン位置を照合し、H3Cでサポートなしのスライスを確認済みです。現物の嵌合、ピンの保持力、接着の耐久性は未確認です。
 
 ### 組み立て
 
-1. 上フレーム左右の穴に軸受けを差し込みます。外すときは背面の解除窓から爪を押します。
-2. クレードルを軸受けの間に置き、左右から **Ø6 mmの軸ピン** を差してCクリップで抜け止めします。左右のスナップガイドを取り付けます。
-3. Tab5を上からガイドに差し込み、下端を受け棚に載せます。背面の純正M3インサート2か所へ、**M3 × 8 mmのステンレスねじと平ワッシャー** で固定します。ワッシャーの設計値は外径7 mm・厚さ0.5 mmです。ねじの底付きを現物で確認します。
-4. 天板は **M3 × 40 mmねじ4本** で、下ケース四隅のM3熱圧入インサートに固定します。
+1. 上フレーム中央の軸受けに受け皿を合わせ、太い主軸ピンを差します。
+2. 受け皿の下端にTab5を載せ、背面の平らな2か所を薄い両面テープで固定します。公式CADと接着面のすき間は約0.6〜0.8 mmなので、現物に合わせてテープ厚を選びます。
+3. 受け皿を好みの角度に合わせ、細い角度ピンを差します。角度を変えるときは、Tab5を支えながら細いピンだけ抜きます。15°・30°・45°で固定できます。
+4. 天板は **M3 × 40 mmねじ4本** で下ケース四隅に固定します。
 
-Blenderのフレーム1〜3で、垂直から後方へ15°・30°・45°の姿勢を確認できます。45°ではTab5が筐体後端から約50 mm張り出します。 [Blenderモデル](NULL_CITY_NC04.blend) · [メーカーCAD](docs/references/tab5/) · [スナップ構造の参考](https://github.com/GOROman/stackchan-strider#組み立て)
+左右のガイドは受け皿に一体化しました。Tab5の固定とチルト機構はねじなしです。 [Blenderモデル](NULL_CITY_NC04.blend) · [メーカーCAD](docs/references/tab5/)
 
 ### NC-03から流用する
 
