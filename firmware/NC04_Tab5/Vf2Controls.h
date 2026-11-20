@@ -58,10 +58,12 @@ public:
 
     bool observe(const Report &report, uint32_t now) {
         if (!report.differs(previous)) return false;
-        entries[next] = {now, previous, report};
+        const Report before = previous;
+        previous = report;
+        if (!report.x && !report.y && report.buttons == before.buttons) return false;
+        entries[next] = {now, before, report};
         next = (next + 1) % capacity;
         if (used < capacity) ++used;
-        previous = report;
         return true;
     }
 

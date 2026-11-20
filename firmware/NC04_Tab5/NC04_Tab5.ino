@@ -308,10 +308,7 @@ void drawStick(const ControlsLayout &layout, StickPosition old, StickPosition ne
 void drawLogArrow(int x, int y, const Report &report) {
     auto &screen = M5.Display;
     const int dx = report.x / 127, dy = report.y / 127;
-    if (!dx && !dy) {
-        screen.fillCircle(x, y, 4, 0x7dd9);
-        return;
-    }
+    if (!dx && !dy) return;
     const bool diagonal = dx && dy;
     const int reach = diagonal ? 13 : 18;
     const int shaft = diagonal ? 4 : 6;
