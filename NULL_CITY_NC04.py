@@ -1,7 +1,7 @@
 """Build the NC-04 Tab5 dock and enclosure study from the NC-03 assembly."""
 
 import json
-from math import radians
+from math import copysign, radians, sqrt
 import struct
 import sys
 from pathlib import Path
@@ -72,6 +72,100 @@ def boolean(part, tool, operation):
 def bore(part, radius, width, position, parent=None):
     cutter = cylinder("Bore cutter", radius, width, position, parent)
     boolean(part, cutter, "DIFFERENCE")
+
+
+def thin_tray_floor(tray, white):
+    # Remove material from the inside. The outside stays flat on the build plate.
+    floor_cut = box("Floor thinning cutter", (280, 170, 3.2), (0, 0, 3.8), white, bevel=0)
+    usb_keepout = box("USB guide keep-out", (76, 67, 8), (-22, 57.5, 4), white, bevel=0)
+    boolean(floor_cut, usb_keepout, "DIFFERENCE")
+    for x in (-113, 113):
+        for y in (-66, 66):
+            foot = cylinder("Foot pad keep-out", 15, 8, (x, y, 4))
+            foot.rotation_euler.y = 0
+            boolean(floor_cut, foot, "DIFFERENCE")
+    for x in (-135, 135):
+        for y in (-80, 80):
+            boss = cylinder("Corner boss keep-out", 13, 8, (x, y, 4))
+            boss.rotation_euler.y = 0
+            boolean(floor_cut, boss, "DIFFERENCE")
+    boolean(tray, floor_cut, "DIFFERENCE")
+
+
+def finish_shell_edge(part, height, half_width, half_depth, corner, width):
+    limits = (
+        lambda v: abs(v.x) - half_width,
+        lambda v: abs(v.y) - half_depth,
+        lambda v: abs(v.x) + abs(v.y) - half_width - half_depth + corner,
+    )
+    weights = part.data.attributes.get("bevel_weight_edge")
+    if weights is None:
+        weights = part.data.attributes.new("bevel_weight_edge", "FLOAT", "EDGE")
+    for edge in part.data.edges:
+        a, b = (part.data.vertices[index].co for index in edge.vertices)
+        if abs(a.z - height) < 0.001 and abs(b.z - height) < 0.001:
+            if any(abs(limit(a)) < 0.001 and abs(limit(b)) < 0.001 for limit in limits):
+                weights.data[edge.index].value = 1
+    bevel = part.modifiers.new("Exterior edge finish", "BEVEL")
+    bevel.limit_method = "WEIGHT"
+    bevel.width = width
+    bevel.segments = 3
+    bpy.context.view_layer.objects.active = part
+    bpy.ops.object.modifier_apply(modifier=bevel.name)
+
+
+def finish_deck_edges(panel, white):
+    old_corner = 5 - (2 - sqrt(2)) * 0.5
+    new_corner = 5 - (2 - sqrt(2)) * 0.9
+    for vertex in panel.data.vertices:
+        x, y, z = vertex.co
+        if abs(z - 47) < 0.001:
+            if abs(abs(x) - 143.5) < 0.001 and abs(abs(y) - (88.5 - old_corner)) < 0.001:
+                vertex.co.x = copysign(143.1, x)
+                vertex.co.y = copysign(88.1 - new_corner, y)
+            elif abs(abs(y) - 88.5) < 0.001 and abs(abs(x) - (143.5 - old_corner)) < 0.001:
+                vertex.co.x = copysign(143.1 - new_corner, x)
+                vertex.co.y = copysign(88.1, y)
+        elif abs(z - 46.5) < 0.001:
+            if ((abs(abs(x) - 144) < 0.001 and abs(abs(y) - 84) < 0.001)
+                or (abs(abs(y) - 89) < 0.001 and abs(abs(x) - 139) < 0.001)):
+                vertex.co.z = 46.1
+
+    layout = json.loads((ROOT / "artwork" / "led_layout.json").read_text())
+    for led in layout["leds"]:
+        x, y = led["x"], led["y"]
+        corners = ((-1, -1), (1, -1), (1, 1), (-1, 1))
+        vertices = [(x + dx * half, y + dy * half, z)
+                    for z, half in ((46.6, 2), (47.12, 2.52)) for dx, dy in corners]
+        faces = [(3, 2, 1, 0), (4, 5, 6, 7)]
+        faces += [(i, (i + 1) % 4, (i + 1) % 4 + 4, i + 4) for i in range(4)]
+        mesh = bpy.data.meshes.new("LED chamfer cutter")
+        mesh.from_pydata(vertices, [], faces)
+        cutter = bpy.data.objects.new("LED chamfer cutter", mesh)
+        bpy.context.collection.objects.link(cutter)
+        cutter.matrix_world = panel.matrix_world.copy()
+        mesh.materials.append(white)
+        boolean(panel, cutter, "DIFFERENCE")
+
+
+def export_print_part(part, filename):
+    mesh = bmesh.new()
+    mesh.from_mesh(part.data)
+    bmesh.ops.triangulate(mesh, faces=list(mesh.faces))
+    bottom = min(vertex.co.z for vertex in mesh.verts)
+    for vertex in mesh.verts:
+        vertex.co.z -= bottom
+    staging_mesh = bpy.data.meshes.new(filename)
+    mesh.to_mesh(staging_mesh)
+    mesh.free()
+    staging = bpy.data.objects.new(filename, staging_mesh)
+    bpy.context.collection.objects.link(staging)
+    bpy.ops.object.select_all(action="DESELECT")
+    staging.select_set(True)
+    bpy.context.view_layer.objects.active = staging
+    bpy.ops.wm.stl_export(filepath=str(ROOT / "STL" / filename), export_selected_objects=True)
+    bpy.data.objects.remove(staging, do_unlink=True)
+    bpy.data.meshes.remove(staging_mesh)
 
 
 def add_shoulders(frame, white):
@@ -236,7 +330,14 @@ def main():
     bpy.data.objects["Violet rim"].data.color = (0.83, 0.91, 1.0)
     add_flat_graphics(ink, accent)
     expose_led_openings()
-    add_shoulders(bpy.data.objects["PRINT_02_upper_frame"], white)
+    finish_deck_edges(bpy.data.objects["PRINT_03_control_panel"], white)
+    upper = bpy.data.objects["PRINT_02_upper_frame"]
+    add_shoulders(upper, white)
+    finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
+    tray = bpy.data.objects["PRINT_01_lower_tray"]
+    thin_tray_floor(tray, white)
+    finish_shell_edge(tray, 24, 150, 95, 8, 0.7)
+    finish_shell_edge(tray, 3, 149, 94, 8, 0.85)
     white.name = "NC-04 white PLA"
     for part in bpy.context.scene.objects:
         if part.name.startswith("PRINT_TPU"):
@@ -269,6 +370,13 @@ def main():
 
     add_gpio_port(cradle, pivot, white, brass)
     add_tab5(pivot, device, display)
+    for part, filename in (
+        (tray, "NC04_01_lower_tray.stl"),
+        (upper, "NC04_02_upper_frame.stl"),
+        (bpy.data.objects["PRINT_03_control_panel"], "NC04_03_control_panel.stl"),
+        (cradle, "NC04_04_tab5_cradle.stl"),
+    ):
+        export_print_part(part, filename)
 
     for frame, angle in enumerate(TILT_ANGLES, start=1):
         pivot.rotation_euler.x = radians(-angle)
