@@ -2,6 +2,7 @@ import bpy, os, json
 from mathutils import Vector
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 OUT=os.path.dirname(os.path.abspath(__file__))
+BUILD_NC04_BASE = globals().get('BUILD_NC04_BASE', False)
 def mat(n,c,metal=0,rough=.35):
  m=bpy.data.materials.new(n);m.diffuse_color=(*c,1);m.use_nodes=True;p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*c,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough;return m
 ivory=mat('Pearl white PETG',(.85,.86,.92));navy=mat('Deep navy',(.012,.019,.075));green=mat('Lime green',(.018,.72,.001));clear=mat('Transparent button placeholder',(.65,.8,.95));purple=mat('Purple balltop',(.26,.015,.72),.1,.12);pink=mat('Magenta accent',(.95,.01,.43));black=mat('Black',(.018,.018,.025))
@@ -58,7 +59,8 @@ base=shell('PRINT_01_lower_tray',[(0,290,180,7),(3,298,188,8),(5,300,190,8),(24,
 cut(base,cube('Lower cavity',(0,0,17),(288,178,24)))
 # Rear cable notch opens at the split line so the USB plug need not pass through.
 # 8 mm wide x 6 mm deep below Z=24; rear wall is Y=89..95.
-cut(base,cube('USB cable exit notch',(0,94,22),(8,16,8)))
+if not BUILD_NC04_BASE:
+ cut(base,cube('USB cable exit notch',(0,94,22),(8,16,8)))
 import sys
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),'scripts'))
 from usb_relief import add_usb_relief
@@ -192,7 +194,8 @@ for x in (-135,135):
   cut(screw,cyl('hex socket',x,y,49,1.25,1.8,None,6))
 for x in (-113,113):
  for y in (-66,66):cyl('PRINT_TPU_foot_%d_%d'%(x,y),x,y,-2,11,4,black)
-usb_bridges=add_usb_relief(base,ivory,cube,cyl,boolean,cut,os.path.dirname(os.path.abspath(__file__)))
+if not BUILD_NC04_BASE:
+ add_usb_relief(base,ivory,cube,cyl,boolean,cut,os.path.dirname(os.path.abspath(__file__)))
 mono_panel_mesh=finish_panel(panel,panel_colors,OUT,boolean)
 # Use planar local coordinates for the exposed deck, preserving physical holes.
 texture=mat('Printed PLA blue deck',(.012,.019,.075),.03,.38)
@@ -232,20 +235,22 @@ scene.render.engine='CYCLES';scene.cycles.samples=96;scene.cycles.use_denoising=
 scene.render.resolution_x=1152;scene.render.resolution_y=730;scene.render.resolution_percentage=100
 from render_camera import fit_perspective
 fit_perspective(scene,(130,-760,520),(0,0,31))
-# Export each component in its local printing orientation, resting at Z=0.
-deps=bpy.context.evaluated_depsgraph_get()
-exportdir=os.path.join(OUT,'STL');os.makedirs(exportdir,exist_ok=True)
-for obj in list(scene.objects):
- if not obj.name.startswith('PRINT_'):continue
- mesh=mono_panel_mesh.copy() if obj==panel else bpy.data.meshes.new_from_object(obj.evaluated_get(deps))
- mesh.transform(Matrix.Translation((0,0,-min(v.co.z for v in mesh.vertices))))
- temp=bpy.data.objects.new('Temporary export',mesh);scene.collection.objects.link(temp)
- bpy.ops.object.select_all(action='DESELECT');temp.select_set(True);bpy.context.view_layer.objects.active=temp
- bpy.ops.wm.stl_export(filepath=os.path.join(exportdir,obj.name+'.stl'),export_selected_objects=True)
- bpy.data.objects.remove(temp,do_unlink=True);bpy.data.meshes.remove(mesh)
+if not BUILD_NC04_BASE:
+ # Export each component in its local printing orientation, resting at Z=0.
+ deps=bpy.context.evaluated_depsgraph_get()
+ exportdir=os.path.join(OUT,'STL');os.makedirs(exportdir,exist_ok=True)
+ for obj in list(scene.objects):
+  if not obj.name.startswith('PRINT_'):continue
+  mesh=mono_panel_mesh.copy() if obj==panel else bpy.data.meshes.new_from_object(obj.evaluated_get(deps))
+  mesh.transform(Matrix.Translation((0,0,-min(v.co.z for v in mesh.vertices))))
+  temp=bpy.data.objects.new('Temporary export',mesh);scene.collection.objects.link(temp)
+  bpy.ops.object.select_all(action='DESELECT');temp.select_set(True);bpy.context.view_layer.objects.active=temp
+  bpy.ops.wm.stl_export(filepath=os.path.join(exportdir,obj.name+'.stl'),export_selected_objects=True)
+  bpy.data.objects.remove(temp,do_unlink=True);bpy.data.meshes.remove(mesh)
 bpy.ops.object.select_all(action='DESELECT');scene.render.image_settings.file_format='JPEG';scene.render.filepath='//preview.jpg'
 for area in bpy.context.screen.areas:
  if area.type=='VIEW_3D':
   area.spaces.active.region_3d.view_perspective='CAMERA';area.spaces.active.clip_end=2500
 bpy.context.preferences.filepaths.save_version=0
-bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'NULL_CITY_NC03.blend'),compress=True)
+if not BUILD_NC04_BASE:
+ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'NULL_CITY_NC03.blend'),compress=True)

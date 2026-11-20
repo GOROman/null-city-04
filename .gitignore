@@ -14,3 +14,6 @@ __pycache__/
 /web/test-results/
 /web/playwright-report/
 /web/public/project/
+
+# Arduino sketch export artifacts
+/firmware/NC04_Tab5/build/

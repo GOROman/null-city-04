@@ -1,0 +1,133 @@
+#pragma once
+#include <stdint.h>
+
+namespace vf2 {
+enum Input : uint8_t { Up, Down, Left, Right, Guard, Punch, Kick, Coin, Start, Player2, Count };
+constexpr uint8_t pins[] = {16, 18, 19, 5, 3, 4, 2, 7, 6};
+constexpr uint16_t inputBit(Input input) { return 1u << input; }
+constexpr uint8_t reportId = 1;
+
+// Signed X/Y, six independent buttons and two padding bits.
+constexpr uint8_t reportMap[] = {
+    0x05, 0x01, 0x09, 0x04, 0xa1, 0x01, 0x85, reportId,
+    0x09, 0x30, 0x09, 0x31, 0x15, 0x81, 0x25, 0x7f,
+    0x75, 0x08, 0x95, 0x02, 0x81, 0x02,
+    0x05, 0x09, 0x19, 0x01, 0x29, 0x06, 0x15, 0x00, 0x25, 0x01,
+    0x75, 0x01, 0x95, 0x06, 0x81, 0x02, 0x95, 0x02, 0x81, 0x03, 0xc0,
+};
+
+struct Report {
+    int8_t x;
+    int8_t y;
+    uint8_t buttons;
+
+    bool differs(const Report &other) const {
+        return x != other.x || y != other.y || buttons != other.buttons;
+    }
+};
+static_assert(sizeof(Report) == 3, "HID report must be three bytes");
+
+constexpr Report reportFor(uint16_t inputs) {
+    return {
+        static_cast<int8_t>(127 * (!!(inputs & inputBit(Right)) - !!(inputs & inputBit(Left)))),
+        static_cast<int8_t>(127 * (!!(inputs & inputBit(Down)) - !!(inputs & inputBit(Up)))),
+        static_cast<uint8_t>((inputs >> Guard) & 0x3f),
+    };
+}
+
+constexpr uint16_t virtualDirections(int dx, int dy, int deadZone) {
+    if (dx * dx + dy * dy <= deadZone * deadZone) return 0;
+    const int x = dx < 0 ? -dx : dx;
+    const int y = dy < 0 ? -dy : dy;
+    // Sector boundaries are tan(22.5 degrees) away from each cardinal axis.
+    const uint16_t horizontal = dx > 0 ? inputBit(Right) : inputBit(Left);
+    const uint16_t vertical = dy > 0 ? inputBit(Down) : inputBit(Up);
+    if (y * 1000 < x * 414) return horizontal;
+    if (x * 1000 < y * 414) return vertical;
+    return horizontal | vertical;
+}
+
+class Debouncer {
+public:
+    uint16_t update(uint16_t raw, uint32_t now) {
+        uint16_t changed = raw ^ previous;
+        for (uint8_t i = 0; i < Count; ++i) {
+            const uint16_t mask = 1u << i;
+            if (changed & mask) lastChange[i] = now;
+            if (now - lastChange[i] >= 5) {
+                stable = (stable & ~mask) | (raw & mask);
+            }
+        }
+        previous = raw;
+        return stable;
+    }
+
+private:
+    uint16_t previous = 0;
+    uint16_t stable = 0;
+    uint32_t lastChange[Count] = {};
+};
+
+class Macro {
+public:
+    void record(uint32_t now) {
+        recording = true;
+        playing = false;
+        length = 0;
+        held = 0;
+        since = now;
+    }
+
+    void finish(uint32_t now) {
+        if (!recording) return;
+        if (length || held) append(now);
+        recording = false;
+    }
+
+    void play(uint32_t now) {
+        if (recording || !length) return;
+        playing = true;
+        index = 0;
+        since = now;
+    }
+
+    void cancel() { playing = false; }
+    bool isRecording() const { return recording; }
+    bool isPlaying() const { return playing; }
+    uint8_t size() const { return length; }
+
+    uint16_t update(uint16_t physical, uint32_t now) {
+        // Coin, Start and 2P remain live and cannot be recorded or replayed.
+        const uint16_t buttons = physical & ((1u << Coin) - 1);
+        if (recording && buttons != held) {
+            if (length || held) append(now);
+            held = buttons;
+            since = now;
+        }
+        if (!playing) return physical;
+        if (now - since >= steps[index].duration) {
+            since = now;
+            if (++index == length) {
+                playing = false;
+                return physical;
+            }
+        }
+        return steps[index].inputs | (physical & (inputBit(Coin) | inputBit(Start) | inputBit(Player2)));
+    }
+
+private:
+    struct Step { uint16_t inputs; uint16_t duration; };
+    Step steps[64] = {};
+    uint8_t length = 0, index = 0;
+    uint32_t since = 0;
+    uint16_t held = 0;
+    bool recording = false, playing = false;
+
+    void append(uint32_t now) {
+        const uint32_t elapsed = now - since;
+        steps[length++] = {held, static_cast<uint16_t>(elapsed < 20 ? 20 :
+                                                     elapsed > 5000 ? 5000 : elapsed)};
+        if (length == sizeof(steps) / sizeof(steps[0])) recording = false;
+    }
+};
+}  // namespace vf2

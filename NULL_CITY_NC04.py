@@ -2,6 +2,7 @@
 
 import json
 from math import copysign, cos, pi, radians, sin, sqrt, tan
+import runpy
 import struct
 import sys
 from pathlib import Path
@@ -14,6 +15,9 @@ from mathutils import Matrix, Vector
 ROOT = Path(__file__).resolve().parent
 TAB5_WIDTH = 128.0
 SIDE_CLEARANCE = 0.7
+TAB5_REAR_M3_X = (-60, 60)
+TAB5_REAR_M3_Z = 10.45
+TAB5_REAR_INSERT_Y = 5.68
 PIVOT = (0, 80, 67)
 GPIO_X = -38
 GPIO_Y = 3.4
@@ -85,8 +89,6 @@ def bore(part, radius, width, position, parent=None, axis="X"):
 def thin_tray_floor(tray, white):
     # Remove material from the inside. The outside stays flat on the build plate.
     floor_cut = box("Floor thinning cutter", (280, 170, 3.2), (0, 0, 3.8), white, bevel=0)
-    usb_keepout = box("USB guide keep-out", (76, 67, 8), (-22, 57.5, 4), white, bevel=0)
-    boolean(floor_cut, usb_keepout, "DIFFERENCE")
     for x in (-113, 113):
         for y in (-66, 66):
             foot = cylinder("Foot pad keep-out", 15, 8, (x, y, 4))
@@ -327,8 +329,8 @@ def add_tab5(pivot, case, glass, brass):
     # The manufacturer STL models the structure. The thin glass cap closes its open front.
     box("Tab5 front glass cover", (127, 0.32, 79), (0, -6, 46.5), glass, tab, bevel=0.13)
     add_display(tab)
-    for x in (-60, 60):
-        center = (x, 5.68, 10.45)
+    for x in TAB5_REAR_M3_X:
+        center = (x, TAB5_REAR_INSERT_Y, TAB5_REAR_M3_Z)
         factory_insert = cylinder("Tab5 factory M3 insert", 1.42, 0.6, center, tab, axis="Y")
         bore(factory_insert, 1.22, 1.2, center, tab, axis="Y")
         factory_insert.data.materials.append(brass)
@@ -471,17 +473,40 @@ def add_snap_guides(cradle, pivot, white):
     return guides
 
 
-def add_tab5_retention(cradle, pivot, hardware):
-    # These centers are in the two lower factory holes of the official Tab5 body STL.
-    for x in (-60, 60):
-        z = 10.45
-        bore(cradle, 1.7, 5, (x, 8.4, z), pivot, axis="Y")
-        washer = cylinder("Tab5 M3 flat washer", 3.5, 0.55, (x, 10.28, z), pivot, axis="Y")
-        bore(washer, 1.6, 1, (x, 10.28, z), pivot, axis="Y")
+def add_tab5_retention(cradle, pivot, white, hardware):
+    inner_y, outer_y = 6.4, 10.4
+    washer_thickness = 0.5
+    screw_length = 8
+    z = TAB5_REAR_M3_Z
+    # The rear ears overlap the seat and leave a flat washer land around each
+    # through-hole. A 45-degree roof keeps the horizontal holes self-supporting.
+    axes = Matrix(((1, 0, 0, 0), (0, 0, -1, 0),
+                   (0, 1, 0, 0), (0, 0, 0, 1)))
+    radius = 1.75
+    angles = [radians(135 + step * 7.5) for step in range(37)]
+    for x in TAB5_REAR_M3_X:
+        ear = box("Tab5 rear mounting ear", (10.4, outer_y - inner_y, 12.8),
+                  (x, (inner_y + outer_y) / 2, 10), white, pivot, bevel=0)
+        boolean(cradle, ear, "UNION")
+        profile = [(x + radius*cos(a), z + radius*sin(a)) for a in angles]
+        profile.append((x, z + sqrt(2)*radius))
+        clearance = prism("Support-free M3 clearance", profile, -outer_y - 0.2,
+                          -inner_y + 0.2, white)
+        clearance.data.transform(axes)
+        clearance.parent = pivot
+        boolean(cradle, clearance, "DIFFERENCE")
+
+        washer_y = outer_y + washer_thickness / 2
+        washer = cylinder("Tab5 M3 flat washer", 3.5, washer_thickness,
+                          (x, washer_y, z), pivot, axis="Y")
+        bore(washer, 1.6, 1, (x, washer_y, z), pivot, axis="Y")
         washer.data.materials.append(hardware)
-        screw = cylinder("Tab5 rear M3 screw shank", 1.2, 8, (x, 6.55, z), pivot, axis="Y")
+        bearing_y = outer_y + washer_thickness
+        screw = cylinder("Tab5 rear M3x8 screw shank", 1.5, screw_length,
+                         (x, bearing_y - screw_length / 2, z), pivot, axis="Y")
         screw.data.materials.append(hardware)
-        head = cylinder("Tab5 rear M3 screw head", 2.75, 2, (x, 11.55, z), pivot, axis="Y")
+        head = cylinder("Tab5 rear M3x8 screw head", 2.75, 2,
+                        (x, bearing_y + 1, z), pivot, axis="Y")
         head.data.materials.append(hardware)
 
 
@@ -628,7 +653,8 @@ def expose_led_openings():
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(ROOT / "NULL_CITY_NC03.blend"))
+    bpy.ops.wm.read_factory_settings(use_empty=False)
+    runpy.run_path(str(ROOT / "NULL_CITY_NC03.py"), init_globals={"BUILD_NC04_BASE": True})
     white = bpy.data.materials["Pearl white PETG"]
     device = material("Tab5 housing reference", (0.74, 0.75, 0.77))
     display = material("Tab5 front glass", (0.012, 0.019, 0.026))
@@ -678,7 +704,6 @@ def main():
         rails = (
             box("Lower seat", (27, 16, 3), (side * 55, 0, 5), white, pivot),
             box("Front retaining lip", (4.5, 2.4, 10), (side * 61.7, -8.0, 10), white, pivot),
-            box("Rear retaining lip", (10.1, 3.2, 10), (side * 59.45, 8.4, 10), white, pivot),
         )
         for rail in rails:
             boolean(cradle, rail, "UNION")
@@ -691,7 +716,7 @@ def main():
     gpio_start["ribbon_width_mm"] = GPIO_RIBBON_WIDTH
     gpio_start["ribbon_thickness_mm"] = GPIO_RIBBON_THICKNESS
     gpio_entry = anchor("GpioCableEntry", GPIO_CABLE_ENTRY)
-    add_tab5_retention(cradle, pivot, hardware)
+    add_tab5_retention(cradle, pivot, white, hardware)
     add_tab5(pivot, device, display, brass)
     for part, filename in (
         (tray, "NC04_01_lower_tray.stl"),

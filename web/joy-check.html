@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NC-04 USB Joy Check</title>
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: "NULL FONT", sans-serif;
+    --background: #080810;
+    --surface: #101831;
+    --guide: #203441;
+    --border: #315962;
+    --text: #e6eaee;
+    --muted: #7bbacd;
+    --heading: #9cffff;
+    --active: #4aded5;
+    --active-border: #a4ffff;
+    background: var(--background);
+    color: var(--text);
+  }
+  body { margin: 0; min-height: 100vh; }
+  main { max-width: 880px; margin: auto; padding: clamp(24px, 6vw, 64px) 20px; }
+  header, .status, .metrics { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; }
+  header { justify-content: space-between; }
+  h1 { font-size: clamp(1.65rem, 5vw, 2.8rem); margin: 0; color: var(--heading); }
+  .brand { color: var(--text); margin-left: auto; }
+  .actions { display: grid; justify-items: end; gap: 8px; }
+  h2 { font-size: .92rem; letter-spacing: .08em; }
+  button, select { font: inherit; border: 1px solid var(--border); border-radius: 7px; padding: 9px 13px; background: var(--surface); color: inherit; }
+  button:enabled { cursor: pointer; }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--active-border); outline-offset: 3px; }
+  .status { min-height: 2.5em; margin-block: 14px 24px; color: var(--muted); }
+  .controls { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; }
+  section { background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .cell { display: grid; place-items: center; text-align: center; min-height: 50px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+  #buttons { justify-items: center; gap: 12px; }
+  #buttons button { width: min(100%, 90px); aspect-ratio: 1; min-height: 0; padding: 4px; border-radius: 50%; font-size: clamp(.8rem, 3vw, 1rem); grid-row: 2; }
+  #buttons .system { width: min(83.333%, 75px); grid-row: 1; }
+  #buttons button:nth-child(3n+1) { grid-column: 1; }
+  #buttons button:nth-child(3n+2) { grid-column: 2; }
+  #buttons button:nth-child(3n) { grid-column: 3; }
+  #buttons button, #stick { touch-action: none; user-select: none; }
+  #stick { position: relative; margin: auto; width: min(100%, 225px); aspect-ratio: 1; border: 2px solid var(--border); border-radius: 50%; background: radial-gradient(circle, var(--guide) 0 22%, var(--surface) 23% 63%, var(--guide) 64%); cursor: grab; }
+  #stick:active { cursor: grabbing; }
+  #stick:focus-visible { outline: 2px solid var(--active-border); }
+  #directions { position: absolute; inset: 9%; font-size: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); pointer-events: none; }
+  #directions span { display: grid; place-items: center; }
+  #directions span:not(:nth-child(5))::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+  #directions .active::after { background: var(--active); box-shadow: 0 0 10px var(--active); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 27%; aspect-ratio: 1; background: var(--border); border: 2px solid var(--active-border); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); transition: left 130ms cubic-bezier(.16, 1, .3, 1), top 130ms cubic-bezier(.16, 1, .3, 1); }
+  #knob.active { background: var(--active); }
+  .cell.active { background: var(--active); color: var(--background); border-color: var(--active-border); box-shadow: 0 0 12px rgb(74 222 213 / 31%); }
+  .metrics { margin-block: 20px 0; font-size: 1rem; }
+  .help { color: var(--muted); line-height: 1.6; }
+  @media (prefers-reduced-motion: reduce) { #knob { transition: none; } }
+  @media (max-width: 560px) { .controls { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>NC-04 USB Joy Check</h1>
+    <div class="actions">
+      <span class="brand">NULL CITY NC-04</span>
+      <button id="direct" type="button">Select USB device</button>
+      <button id="download" type="button" hidden>Enter download mode</button>
+    </div>
+  </header>
+  <div class="status">
+    <span id="status" role="status">Waiting for input</span>
+    <select id="controllers" aria-label="Game controller" hidden></select>
+  </div>
+  <div class="controls">
+    <section aria-labelledby="lever-title">
+      <h2 id="lever-title">Stick</h2>
+      <div id="stick" tabindex="0" aria-label="Virtual joystick. Drag or use arrow keys.">
+        <div id="directions" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+        <div id="knob"></div>
+      </div>
+    </section>
+    <section aria-labelledby="buttons-title">
+      <h2 id="buttons-title">Buttons</h2>
+      <div class="grid" id="buttons">
+        <button type="button" class="cell">G</button><button type="button" class="cell">P</button>
+        <button type="button" class="cell">K</button><button type="button" class="cell system">COIN</button>
+        <button type="button" class="cell system">1P</button><button type="button" class="cell system">2P</button>
+      </div>
+      <p class="metrics"><span>X <output id="axis-x">—</output></span><span>Y <output id="axis-y">—</output></span></p>
+    </section>
+  </div>
+  <p class="help" aria-label="Keyboard shortcuts">Z = G · X = P · C = K · Return = Coin · 1 = 1P · 2 = 2P</p>
+  <p class="help">Connect Tab5 by USB-C, focus this page, then move the stick or press a button. In Chrome, use Select USB device if it does not appear. On-screen controls and keyboard shortcuts test this page locally.</p>
+</main>
+<script type="module">
+  const fontUrl = new URL('./project/NULLFont-Italic.woff2', document.baseURI);
+  const nullFont = new FontFace('NULL FONT', `url("${fontUrl.href}")`, {display: 'swap'});
+  document.fonts.add(nullFont);
+
+  const status = document.querySelector('#status');
+  const controllers = document.querySelector('#controllers');
+  const direct = document.querySelector('#direct');
+  const download = document.querySelector('#download');
+  const downloadReport = 0x7e;
+  const downloadCommand = new TextEncoder().encode('NC04BOOT');
+  const stick = document.querySelector('#stick');
+  const knob = document.querySelector('#knob');
+  const directions = [...document.querySelector('#directions').children];
+  const buttons = [...document.querySelector('#buttons').children];
+  const axisX = document.querySelector('#axis-x');
+  const axisY = document.querySelector('#axis-y');
+  let device;
+  let directInput = [0, 0, 0];
+  let controllerList = '';
+  let message = '';
+  let previousDirection = -1;
+  let previousButtons = 0;
+  let stickPointer;
+  let virtualX = 0;
+  let virtualY = 0;
+  const touchButtons = new Map();
+  const keys = new Set();
+  const keyboardButtons = new Map(Object.entries({
+    KeyZ: 0, KeyX: 1, KeyC: 2, Enter: 3, NumpadEnter: 3,
+    Digit1: 4, Numpad1: 4, Digit2: 5, Numpad2: 5,
+  }));
+  const pressedKeys = new Set();
+  const arrows = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  function moveStick(event) {
+    if (event.pointerId !== stickPointer) return;
+    const rect = stick.getBoundingClientRect();
+    const dx = event.clientX - rect.left - rect.width / 2;
+    const dy = event.clientY - rect.top - rect.height / 2;
+    const deadZone = rect.width / 8;
+    const active = dx * dx + dy * dy > deadZone * deadZone;
+    virtualX = active && Math.abs(dx) >= Math.abs(dy) * .414 ? Math.sign(dx) : 0;
+    virtualY = active && Math.abs(dy) >= Math.abs(dx) * .414 ? Math.sign(dy) : 0;
+  }
+
+  stick.addEventListener('pointerdown', event => {
+    if (stickPointer !== undefined || event.button !== 0) return;
+    stickPointer = event.pointerId;
+    stick.setPointerCapture(stickPointer);
+    moveStick(event);
+  });
+  stick.addEventListener('pointermove', moveStick);
+  stick.addEventListener('lostpointercapture', event => {
+    if (event.pointerId !== stickPointer) return;
+    stickPointer = undefined;
+    virtualX = virtualY = 0;
+  });
+  for (const type of ['keydown', 'keyup']) {
+    stick.addEventListener(type, event => {
+      if (!arrows.includes(event.key)) return;
+      event.preventDefault();
+      if (type === 'keydown') keys.add(event.key);
+      else keys.delete(event.key);
+    });
+  }
+  stick.addEventListener('blur', () => keys.clear());
+  buttons.forEach((button, index) => {
+    button.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      button.setPointerCapture(event.pointerId);
+      touchButtons.set(event.pointerId, 1 << index);
+    });
+    button.addEventListener('lostpointercapture', event => touchButtons.delete(event.pointerId));
+    button.addEventListener('keydown', event => {
+      if (event.key === ' ') touchButtons.set(button, 1 << index);
+    });
+    button.addEventListener('keyup', event => {
+      if (event.key === ' ') touchButtons.delete(button);
+    });
+    button.addEventListener('blur', () => touchButtons.delete(button));
+  });
+
+  window.addEventListener('keydown', event => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
+        !keyboardButtons.has(event.code) ||
+        event.target.closest?.('input, select, textarea, [contenteditable="true"]')) return;
+    event.preventDefault();
+    pressedKeys.add(event.code);
+  });
+  window.addEventListener('keyup', event => pressedKeys.delete(event.code));
+  window.addEventListener('blur', () => pressedKeys.clear());
+
+  function setStatus(value) {
+    if (status.textContent !== value) status.textContent = value;
+  }
+
+  function showInput(x, y, mask, connected) {
+    const axis = value => value > .5 ? 1 : value < -.5 ? -1 : 0;
+    const direction = connected ? 4 + axis(x) + 3 * axis(y) : -1;
+    if (direction !== previousDirection) {
+      directions[previousDirection]?.classList.remove('active');
+      directions[direction]?.classList.add('active');
+      previousDirection = direction;
+      const dx = connected ? axis(x) : 0;
+      const dy = connected ? axis(y) : 0;
+      const travel = dx && dy ? 23 : 33;
+      knob.style.left = `${50 + dx * travel}%`;
+      knob.style.top = `${50 + dy * travel}%`;
+      knob.classList.toggle('active', Boolean(dx || dy));
+    }
+    if (mask !== previousButtons) {
+      buttons.forEach((tile, i) => tile.classList.toggle('active', Boolean(mask & (1 << i))));
+      previousButtons = mask;
+    }
+    const xText = connected ? x.toFixed(2) : '—';
+    const yText = connected ? y.toFixed(2) : '—';
+    if (axisX.value !== xText) axisX.value = xText;
+    if (axisY.value !== yText) axisY.value = yText;
+  }
+
+  function selectControllers(pads) {
+    const nextList = JSON.stringify(pads.map(pad => [pad.index, pad.id]));
+    if (nextList !== controllerList) {
+      const old = controllers.value;
+      controllers.replaceChildren(...pads.map(pad => new Option(pad.id, pad.index)));
+      if (pads.some(pad => String(pad.index) === old)) controllers.value = old;
+      controllerList = nextList;
+    }
+    controllers.hidden = pads.length < 2;
+  }
+
+  function frame() {
+    let x = 0, y = 0, mask = 0;
+    let source = '';
+    if (device?.opened) {
+      controllers.hidden = true;
+      [x, y, mask] = directInput;
+      source = message || `${device.productName || 'NC-04 VF2 Stick'} · USB HID`;
+    } else {
+      const pads = [...(navigator.getGamepads?.() ?? [])].filter(pad => pad?.connected);
+      selectControllers(pads);
+      const pad = pads.find(item => String(item.index) === controllers.value) ?? pads[0];
+      if (pad) {
+        const standard = pad.mapping === 'standard';
+        x = ((standard && pad.buttons[15]?.pressed) ? 1 : 0) -
+            ((standard && pad.buttons[14]?.pressed) ? 1 : 0) || (pad.axes[0] ?? 0);
+        y = ((standard && pad.buttons[13]?.pressed) ? 1 : 0) -
+            ((standard && pad.buttons[12]?.pressed) ? 1 : 0) || (pad.axes[1] ?? 0);
+        mask = pad.buttons.slice(0, 6).reduce((result, button, i) =>
+          result | (button.pressed ? 1 << i : 0), 0);
+        source = `${pad.id} · Gamepad API`;
+      }
+    }
+
+    const virtualActive = stickPointer !== undefined || keys.size || touchButtons.size || pressedKeys.size;
+    if (virtualActive) {
+      if (stickPointer !== undefined) {
+        x = virtualX;
+        y = virtualY;
+      } else if (keys.size) {
+        x = Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'));
+        y = Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'));
+      }
+      for (const button of touchButtons.values()) mask |= button;
+      for (const code of pressedKeys) mask |= 1 << keyboardButtons.get(code);
+      source = source ? `${source} + Local test` : 'Local test';
+    }
+    showInput(x, y, mask, Boolean(source));
+    setStatus(source || message || 'Waiting for a controller · Move the stick or press a button');
+    requestAnimationFrame(frame);
+  }
+
+  async function openDevice(selected) {
+    if (!selected || selected === device) return;
+    if (device?.opened) await device.close();
+    if (!selected.opened) await selected.open();
+    directInput = [0, 0, 0];
+    device = selected;
+    selected.oninputreport = ({reportId, data}) => {
+      if (device === selected && reportId === 1 && data.byteLength === 3) {
+        directInput = [data.getInt8(0) / 127, data.getInt8(1) / 127, data.getUint8(2) & 63];
+      }
+    };
+    download.hidden = !selected.collections.some(collection =>
+      collection.featureReports?.some(report => report.reportId === downloadReport));
+    message = '';
+  }
+
+  download.addEventListener('click', async () => {
+    if (!device?.opened) return;
+    download.disabled = true;
+    message = 'Switching Tab5 to download mode';
+    try {
+      await device.sendFeatureReport(downloadReport, downloadCommand);
+    } catch (error) {
+      message = `Could not send download command (${error.name})`;
+      download.disabled = false;
+    }
+  });
+
+  if (navigator.hid) {
+    const filter = {vendorId: 0x303a, productId: 0x0002, usagePage: 1, usage: 4};
+    async function chooseDevice(request) {
+      if (direct.disabled) return;
+      direct.disabled = true;
+      try {
+        const [selected] = await request();
+        await openDevice(selected);
+      } catch (error) {
+        message = `Could not open USB HID (${error.name})`;
+      } finally {
+        direct.disabled = false;
+      }
+    }
+    direct.addEventListener('click', () => chooseDevice(() =>
+      navigator.hid.requestDevice({filters: [filter]})));
+    // WebHID grants survive a Vite page reload. Reopen the granted joystick.
+    chooseDevice(async () => (await navigator.hid.getDevices()).filter(candidate =>
+      candidate.vendorId === filter.vendorId && candidate.productId === filter.productId &&
+      candidate.collections.some(collection =>
+        collection.usagePage === filter.usagePage && collection.usage === filter.usage)));
+    navigator.hid.addEventListener('disconnect', event => {
+      if (event.device === device) {
+        device = undefined;
+        directInput = [0, 0, 0];
+        message = download.disabled ? 'Download mode requested' : 'USB disconnected';
+        download.hidden = true;
+        download.disabled = false;
+      }
+    });
+  } else {
+    direct.hidden = true;
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

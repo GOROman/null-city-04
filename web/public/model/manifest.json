@@ -1,16 +1,17 @@
 {
   "name": "NULL CITY NC-04",
   "license": "CC-BY-4.0",
-  "geometry_count": 114,
-  "print_part_count": 21,
+  "geometry_count": 111,
+  "print_part_count": 19,
   "dimensions_mm": [
     300,
     190,
     55
   ],
   "inputs": {
-    "NULL_CITY_NC04.blend": "9465d610bd3a9087f9d2ee83059c4b2892a96f39cc6d55ff506228fe8dd349fa",
-    "NULL_CITY_NC04.py": "23055b341688be475e251a0d1766f3e548c4d8c53150c6465ab73585ba41544c",
+    "NULL_CITY_NC04.blend": "3dc069a184ec4b4fc0c34772ebfa4a2f71806ea8e7f22836325ec6425808e750",
+    "NULL_CITY_NC04.py": "fcdfdd1114e57b40b829bd743638eb767f506920fb13baea5b3902ed74ca21ec",
+    "NULL_CITY_NC03.py": "4d3aee4841f97f5b54e7d05f3bd4f2fab8229ea5afe12aadcce884914fe01408",
     "artwork/lighting_layout.json": "0be694d524caa767faf19912489ff387aecfe88fe896315d2ef1fb1b67560e17",
     "artwork/control_layout.json": "8fbc2b614be24fea58ebcf4d9a7e2862026e5631faf558d88af0915e6eeb7e8d",
     "artwork/tab5-display.png": "ae7ee54a316d17a22123ba3cf4279cbdae897d6ea8b9072b5eff0c2603d72660",
@@ -18,11 +19,9 @@
     "artwork/logo/wordmark.json": "d9c613f7159ee5f2c4a004242b6b0fdfa5c72ccaa5de57f8d61d3079228d6483",
     "fonts/null-font/glyphs.json": "0e4e6d490f94a6918e405fdec23e3d06f6516edcb62fd3faa6fff5259e2e5503",
     "scripts/panel_features.py": "097171c0c3277786ac53e27deeb05eb4efda1017911c29cca098501a44ceab79",
-    "artwork/usb_relief.json": "89c5a51ded045e4b16b133e2d49aa036e3379e4e7e873f8506df9efc8fa1c6e5",
-    "scripts/usb_relief.py": "f8fb0e313ccf04b3f41bc25d343d448f8ddb46cfd6be25ce206525b0e723126d",
     "docs/references/tab5/Tab5.stl": "5e8e6398d85e4183af9040e9b12b1462fe74629b0ee6065581c7c897a8ba1a74",
     "docs/references/tab5/Tab5-rear.jpg": "3592a3be9dabdee2771701722ca59033964b11bad0b09908e191893c423344e2",
-    "scripts/export_web_model.py": "7dc1152b40b51d72689da0e5c81a70ed4dc451ec2367141379ef8ed2769ca1f2"
+    "scripts/export_web_model.py": "318668d56e08dc931157ea18638daca83f8af5cc0923a397a023e0fda2607ef8"
   },
-  "glb_sha256": "821ffea214bb3b40417a73384dbd9d73ebdf8df3936bdf2148086dd0e236c872"
+  "glb_sha256": "ff3ab4955527bad832606e18d29dfb87cb84b484522e4ee64d740e9f6a1615d2"
 }

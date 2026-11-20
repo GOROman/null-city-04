@@ -32,11 +32,10 @@ def displacement(name):
     if name.startswith('M5Stack Tab5'):return (0,0,52)
     if name.startswith('Tab5 snap-in guide'):return (0,0,25)
     if name.startswith(('GPIO 2x5 plug', 'GPIO header pin', 'Ext.Port1 plug tail')):return (0,7,-15)
-    if name.startswith(('Tab5 M3 flat washer', 'Tab5 rear M3 screw')):return (0,26,0)
+    if name.startswith(('Tab5 M3 flat washer', 'Tab5 rear M3x8 screw')):return (0,26,0)
     if name.startswith('Deck M3x40 screw'):return (0,0,104)
     if name.startswith('Deck M3 insert'):return (0,0,13)
     if name.startswith('Flush cyan pinstripe'):return (0,0,70)
-    if name.startswith('PRINT_USB_bridge'):return (0,0,13)
     if name.startswith('PRINT_PLA'):return (0,0,-12)
     if name=='PRINT_light_front_diffuser' or name.startswith(('VISUAL_front_mask','VISUAL_NULL_CITY_wordmark','VISUAL_front_slash')):return (0,-22,0)
     if name=='PRINT_light_left_diffuser':return (-22,0,0)
@@ -96,9 +95,9 @@ doc['asset']['extras']={'project':'NULL CITY NC-04','units':'meters','lighting':
 data=json.dumps(doc,separators=(',',':')).encode();data+=b' '*((-len(data))%4)
 rest=raw[20+length:]
 path.write_bytes(struct.pack('<III',0x46546C67,2,20+len(data)+len(rest))+struct.pack('<II',len(data),0x4E4F534A)+data+rest)
-inputs=['NULL_CITY_NC04.blend','NULL_CITY_NC04.py','artwork/lighting_layout.json',
+inputs=['NULL_CITY_NC04.blend','NULL_CITY_NC04.py','NULL_CITY_NC03.py','artwork/lighting_layout.json',
         'artwork/control_layout.json','artwork/tab5-display.png','artwork/led_layout.json','artwork/logo/wordmark.json','fonts/null-font/glyphs.json',
-        'scripts/panel_features.py','artwork/usb_relief.json','scripts/usb_relief.py',
+        'scripts/panel_features.py',
         'docs/references/tab5/Tab5.stl','docs/references/tab5/Tab5-rear.jpg','scripts/export_web_model.py']
 manifest={'name':'NULL CITY NC-04','license':'CC-BY-4.0','geometry_count':len(geometry),
           'print_part_count':print_part_count,'dimensions_mm':[300,190,55],
