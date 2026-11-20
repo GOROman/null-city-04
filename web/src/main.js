@@ -2,8 +2,8 @@ import '@google/model-viewer';
 import '@google/model-viewer-effects';
 import {Arcade} from './arcade.js';
 import {EnvironmentRotationPass} from './environment-pass.js';
-import {BufferGeometry, CanvasTexture, CubicBezierCurve3, Float32BufferAttribute, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3} from 'three';
-import {drawTab5} from './tab5-display.js';
+import {CanvasTexture, SRGBColorSpace, Vector3} from 'three';
+import {drawTab5, tab5Input, tab5LogEntry} from './tab5-display.js';
 import {bed, buildPrintLayout, disposePlate, plates} from './print-layout.js';
 import './style.css';
 
@@ -43,16 +43,17 @@ const macro=document.querySelector('#tab5-macro');
 const runMacroButton=document.querySelector('#run-macro');
 const macroPresets={UIO:['B1','B2','B4'],JKL:['B3','B5','B6']};
 const displayCanvas=document.createElement('canvas');
-displayCanvas.width=1024;
-displayCanvas.height=576;
+displayCanvas.width=1280;
+displayCanvas.height=720;
 const displayContext=displayCanvas.getContext('2d');
 let displayTexture, macroTimers=[], displayInput={buttons:[],x:0,y:0};
+const displayLog=[];
+let displayStarted=performance.now();
 
 const rgbMode=document.querySelector('#rgb-mode');const rgbColor=document.querySelector('#rgb-color');const rgbSpeed=document.querySelector('#rgb-speed');
 const backgroundColor=document.querySelector('#background-color');const grid=document.querySelector('#grid');
 const ssaoStrength=document.querySelector('#ssao-strength');const ssaoRadius=document.querySelector('#ssao-radius');
 let arcade=null;
-let gpioLoop;
 const environmentSources={studio03:'./environments/studio_small_03_1k.hdr',studio02:'./environments/studio_small_02_1k.hdr',neutral:'neutral'};
 const viewButtons=[...document.querySelectorAll('[data-view]')];
 const viewAngles={hero:[25,65],front:[0,90],right:[90,90],rear:[165,84],gpio:[165,106],top:[0,.1]};
@@ -183,60 +184,6 @@ function setAssembly(){
   viewer.pause();viewer.currentTime=Math.min(viewer.duration-.0001,Math.max(0,viewer.duration*fraction));
   setPrintMode(printing);
   frameCurrentView();
-  updateGpioLoop();
-}
-function ribbonGeometry(curve,width,thickness){
-  const divisions=40;
-  const positions=[];
-  const indices=[3,2,1,3,1,0];
-  const across=new Vector3(width/2,0,0);
-  for(let step=0;step<=divisions;step++){
-    const point=curve.getPoint(step/divisions);
-    const depth=curve.getTangent(step/divisions).cross(across).normalize().multiplyScalar(thickness/2);
-    for(const [side,face] of [[-1,-1],[1,-1],[1,1],[-1,1]]){
-      positions.push(...point.clone().addScaledVector(across,side).addScaledVector(depth,face));
-    }
-    if(step===divisions)continue;
-    const offset=step*4;
-    for(let side=0;side<4;side++){
-      const a=offset+side, b=offset+(side+1)%4;
-      indices.push(a,b,b+4,a,b+4,a+4);
-    }
-  }
-  const end=divisions*4;
-  indices.push(end,end+1,end+2,end,end+2,end+3);
-  const geometry=new BufferGeometry();
-  geometry.setAttribute('position',new Float32BufferAttribute(positions,3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-function updateGpioLoop(){
-  const root=environmentPass.scene?.getObjectByName('NULL_CITY_meters');
-  const moving=root?.getObjectByName('GpioCableStart');
-  const fixed=root?.getObjectByName('GpioCableEntry');
-  if(!moving||!fixed)return;
-  if(Number(assembly.value)>0){
-    if(gpioLoop)gpioLoop.visible=false;
-    return;
-  }
-  const from=root.worldToLocal(moving.getWorldPosition(new Vector3()));
-  const to=root.worldToLocal(fixed.getWorldPosition(new Vector3()));
-  const curve=new CubicBezierCurve3(from,from.clone().add(new Vector3(0,-4,-24)),
-    to.clone().add(new Vector3(0,0,-22)),to);
-  const geometry=ribbonGeometry(curve,moving.userData.ribbon_width_mm,moving.userData.ribbon_thickness_mm);
-  if(!gpioLoop||gpioLoop.parent!==root){
-    gpioLoop?.geometry.dispose();
-    gpioLoop?.material.dispose();
-    gpioLoop=new Mesh(geometry,new MeshStandardMaterial({color:0x7a8189,roughness:.68}));
-    gpioLoop.name='GPIO flat ribbon service loop';
-    root.add(gpioLoop);
-  }else{
-    gpioLoop.geometry.dispose();
-    gpioLoop.geometry=geometry;
-  }
-  gpioLoop.visible=true;
-  composer.queueRender();
 }
 function setLights(){
   for(const {material,factor} of emissive)material.setEmissiveFactor(led.checked?factor:[0,0,0]);
@@ -324,7 +271,7 @@ function setBackgroundColor(disableHDR=true){
 }
 function refreshTab5(){
   if(!displayTexture)return;
-  drawTab5(displayContext,{...displayInput,turbo:turbo.checked,macro:macro.value,running:runMacroButton.disabled});
+  drawTab5(displayContext,{...displayInput,log:displayLog});
   displayTexture.needsUpdate=true;
   composer.queueRender();
 }
@@ -341,6 +288,7 @@ function bindTab5Display(){
   screen.material.emissiveIntensity=.85;
   screen.material.needsUpdate=true;
   refreshTab5();
+  document.fonts.load("italic 28px Null").then(refreshTab5,()=>{});
 }
 function stopMacro(){
   for(const timer of macroTimers)clearTimeout(timer);
@@ -348,7 +296,6 @@ function stopMacro(){
   for(const key of macroPresets[macro.value])arcade?.press(key,false,'macro');
   runMacroButton.disabled=false;
   macro.disabled=false;
-  refreshTab5();
 }
 function runMacro(){
   if(!arcade?.active||macroTimers.length)return;
@@ -359,7 +306,6 @@ function runMacro(){
     macroTimers.push(setTimeout(()=>arcade?.press(key,false,'macro'),index*200+120));
   });
   macroTimers.push(setTimeout(stopMacro,600));
-  refreshTab5();
 }
 function setPlayMode(){
   if(!ready){playMode.checked=false;return;}
@@ -376,7 +322,10 @@ function setPlayMode(){
   if(active)viewer.focus({preventScroll:true});
 }
 function reportInput({buttons,x,y}){
-  displayInput={buttons,x,y};
+  const next=tab5Input({buttons,x,y});
+  const entry=tab5LogEntry(displayInput,next,Math.round(performance.now()-displayStarted));
+  if(entry&&displayLog.push(entry)>64)displayLog.shift();
+  displayInput=next;
   refreshTab5();
   const arrows=Math.hypot(x,y)<.2?'':[['→','↗','↑','↖','←','↙','↓','↘'][(Math.round(Math.atan2(y,x)*4/Math.PI)+8)%8]];
   document.querySelector('#input-readout').value=`入力：${[arrows,...buttons].filter(Boolean).join(' + ')||'—'}`;
@@ -389,6 +338,7 @@ viewer.addEventListener('environment-change',()=>{
   });
 });
 function reset(){
+  displayLog.length=0;displayStarted=performance.now();
   playMode.checked=false;setPlayMode();
   turbo.checked=false;macro.value='UIO';arcade?.setTurbo(false);refreshTab5();
   rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
@@ -416,8 +366,7 @@ viewer.addEventListener('load',()=>{
 viewer.addEventListener('error',()=>{
   ready=false;controls.disabled=true;status.textContent='読み込みエラー';document.querySelector('#error-panel').hidden=false;
 });
-turbo.addEventListener('change',()=>{arcade?.setTurbo(turbo.checked);refreshTab5();});
-macro.addEventListener('change',refreshTab5);
+turbo.addEventListener('change',()=>arcade?.setTurbo(turbo.checked));
 runMacroButton.addEventListener('click',runMacro);
 window.addEventListener('blur',stopMacro);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMacro();});

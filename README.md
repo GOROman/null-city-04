@@ -38,7 +38,7 @@ Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、
 | 2P | — | — | ボタン6・タッチ専用 |
 | 共通GND | 1、3、5のいずれか | — | — |
 
-クレードルのCADには、下辺の **2×5 Ext.Port1** 用の開口とフラットケーブル経路があります。VF2用のハーネスは上のM5-Bus表に合わせて製作し、コネクターとケーブルの逃げを確認します。 [配線の詳細](firmware/README.md) · [Ext.Port1の資料](https://docs.m5stack.com/en/tab5/Tab5_Keyboard)
+クレードルの底面は連続した面です。VF2用のハーネスは上のM5-Bus表に合わせて製作します。 [配線の詳細](firmware/README.md)
 
 ## 筐体を作る
 
@@ -47,18 +47,17 @@ H3Cで一式を新造する場合は、下ケース、上フレーム、天板�
 | 部品 | データと仕様 |
 |---|---|
 | 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
-| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [固定台一体型3MF](print/h3c/NC04-fixed-frame-04-supertack.3mf) · 0.4 mm標準、約3時間23分 |
+| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [上フレーム3MF](print/h3c/NC04-fixed-frame-04-supertack.3mf) · 0.4 mm標準、約3時間5分 |
 | 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
-| クレードル | [STL](STL/NC04_04_tab5_cradle.stl) · [固定式3MF](print/h3c/NC04-fixed-cradle-04-supertack.3mf) · 白PLA、約41分 |
+| クレードルと固定台 | [同一プレートの3MF](print/h3c/NC04-fixed-cradle-04-supertack.3mf) · 白PLA、約1時間3分 · [受け皿STL](STL/NC04_04_tab5_cradle.stl) · [固定台STL](STL/NC04_12_fixed_cradle_mount.stl) |
 | ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
-固定式クレードルは固定台を一体化した新しい上フレームに取り付けます。Tab5は後傾15°で固定します。
+固定台はクレードルと同じプレートで印刷する別部品です。固定台を上フレームの後端中央に接着し、Tab5を後傾15°で固定します。
 
 ### 組み立て
 
-1. 受け皿の底面を上フレーム中央の傾斜面に合わせて接着します。
+1. 固定台の下側を上フレーム後端の輪郭に合わせて接着し、受け皿を固定台上面の傾斜に合わせて接着します。
 2. Tab5を受け皿に載せ、背面の平らな2か所を薄い両面テープで固定します。CAD上のすき間は約0.6〜0.8 mmです。
-3. 下側から2×5端子にフラットケーブルを接続し、筐体内に通します。
 
 [Blenderモデル](NULL_CITY_NC04.blend) · [MuJoCoの固定配置モデル](simulation/nc04-fixed-cradle.xml)
 

@@ -1,7 +1,7 @@
 {
   "name": "NULL CITY NC-04",
   "license": "CC-BY-4.0",
-  "geometry_count": 97,
+  "geometry_count": 86,
   "print_part_count": 19,
   "dimensions_mm": [
     300,
@@ -9,19 +9,19 @@
     55
   ],
   "inputs": {
-    "NULL_CITY_NC04.blend": "033ef7e69963d40d1e1d6959f33f05270e6ec641f5e46b8c8094ad74ffd08c86",
-    "NULL_CITY_NC04.py": "94054a155c7911fa79adc18ced69da1fea32dbf83416df07302f2a14026b0b68",
+    "NULL_CITY_NC04.blend": "47c3cf2b0452b7025be873076e1555b2e4ad359475bbc31f4b8c72d55a54bce9",
+    "NULL_CITY_NC04.py": "905bee9a0fa32ac64009b1e2537dcd123156cdf3316e97ba0f41b0397d21a278",
     "NULL_CITY_NC03.py": "4d3aee4841f97f5b54e7d05f3bd4f2fab8229ea5afe12aadcce884914fe01408",
     "artwork/lighting_layout.json": "0be694d524caa767faf19912489ff387aecfe88fe896315d2ef1fb1b67560e17",
     "artwork/control_layout.json": "8fbc2b614be24fea58ebcf4d9a7e2862026e5631faf558d88af0915e6eeb7e8d",
-    "artwork/tab5-display.png": "ae7ee54a316d17a22123ba3cf4279cbdae897d6ea8b9072b5eff0c2603d72660",
+    "artwork/tab5-display.png": "bbaab49f4a814dbff49b7606fc1ecb912e831a648c59374b5ad5da7dbd192757",
     "artwork/led_layout.json": "3fd1efaf4677b4b46e67cdca743ab87ea298d8c5d07ce9dd96416867627b778a",
     "artwork/logo/wordmark.json": "d9c613f7159ee5f2c4a004242b6b0fdfa5c72ccaa5de57f8d61d3079228d6483",
     "fonts/null-font/glyphs.json": "0e4e6d490f94a6918e405fdec23e3d06f6516edcb62fd3faa6fff5259e2e5503",
     "scripts/panel_features.py": "097171c0c3277786ac53e27deeb05eb4efda1017911c29cca098501a44ceab79",
     "docs/references/tab5/Tab5.stl": "5e8e6398d85e4183af9040e9b12b1462fe74629b0ee6065581c7c897a8ba1a74",
     "docs/references/tab5/Tab5-rear.jpg": "3592a3be9dabdee2771701722ca59033964b11bad0b09908e191893c423344e2",
-    "scripts/export_web_model.py": "eda8453b2b76a124cddd82d505950934df985c960bd06480b1ef7ca567fedd1a"
+    "scripts/export_web_model.py": "88acee89a6ed1f546acc1a78bde4cdc720075b58b603aa5e76a61865ac3d8104"
   },
-  "glb_sha256": "743878df2eb76efcac3c47761a089cc109f5067bbe74abddfb06ebcc875b42d1"
+  "glb_sha256": "c7d11d12537da24292fdcdaee458c454df4701ea1a5edd14dd9aeabf90e7fb99"
 }

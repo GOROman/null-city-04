@@ -17,15 +17,14 @@ pivot=next(o for o in scene.objects if o.name.startswith("Tab5 cradle • fixed 
 pivot.animation_data_clear()
 pivot.name="Tab5CradleMount"
 scene.frame_start=1;scene.frame_end=25
-geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and not o.name.startswith(('STUDIO_floor', 'GPIO service loop'))]
+geometry=[o for o in scene.objects if o.type in ('MESH','CURVE','FONT') and not o.name.startswith(('STUDIO_floor',))]
 print_part_count=sum(o.name.startswith(('PRINT_', 'NC04 upper frame', 'White moving cradle')) for o in geometry)
 
 def displacement(name):
     if name.startswith('NC04 upper frame'):return (0,0,32)
+    if name=='PRINT fixed cradle mount':return (0,0,76)
     if name=='Tab5CradleMount':return (0,0,115)
-    if name=='GpioCableEntry':return (0,0,32)
     if name.startswith('M5Stack Tab5'):return (0,0,52)
-    if name.startswith(('GPIO 2x5 plug', 'GPIO header pin', 'Ext.Port1 plug tail')):return (0,7,-15)
     if name.startswith('Deck M3x40 screw'):return (0,0,104)
     if name.startswith('Deck M3 insert'):return (0,0,13)
     if name.startswith('Flush cyan pinstripe'):return (0,0,70)
@@ -48,7 +47,7 @@ for obj in geometry:
         obj.data.materials.append(indicator)
 
 bpy.ops.object.select_all(action='DESELECT')
-for obj in [*geometry,pivot,bpy.data.objects["GpioCableStart"],bpy.data.objects["GpioCableEntry"]]:
+for obj in [*geometry,pivot]:
     obj.select_set(True)
     start=obj.location.copy();delta=Vector(displacement(obj.name))
     if delta.length:

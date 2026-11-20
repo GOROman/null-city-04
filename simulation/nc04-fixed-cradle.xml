@@ -12,6 +12,7 @@
     <mesh name="tray" file="../STL/NC04_01_lower_tray.stl" scale=".001 .001 .001"/>
     <mesh name="frame" file="../STL/NC04_02_upper_frame.stl" scale=".001 .001 .001"/>
     <mesh name="panel" file="../STL/NC04_03_control_panel.stl" scale=".001 .001 .001"/>
+    <mesh name="mount" file="../STL/NC04_12_fixed_cradle_mount.stl" scale=".001 .001 .001"/>
     <mesh name="cradle" file="../STL/NC04_04_tab5_cradle.stl" scale=".001 .001 .001"/>
   </asset>
   <worldbody>
@@ -19,6 +20,7 @@
     <geom type="mesh" mesh="tray" rgba=".86 .88 .92 1"/>
     <geom type="mesh" mesh="frame" pos="0 0 .024" rgba=".95 .96 .99 1"/>
     <geom type="mesh" mesh="panel" pos="0 0 .043" euler="2.55 0 0" rgba=".84 .88 .93 1"/>
+    <geom type="mesh" mesh="mount" pos=".029 0 0" euler="0 -90 0" rgba=".95 .96 .99 1"/>
     <body name="fixed_cradle" pos="0 .079 .073" euler="-15 0 0">
       <geom type="mesh" mesh="cradle" pos="0 0 -.0045" density="1240" rgba=".95 .96 .99 1"/>
       <!-- Battery-free Tab5, modeled as a rigid 128 x 80 x 12 mm body. -->

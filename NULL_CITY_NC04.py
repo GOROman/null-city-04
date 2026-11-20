@@ -20,11 +20,6 @@ TAB5_REAR_M3_Z = 10.45
 TAB5_REAR_INSERT_Y = 5.68
 PIVOT = (0, 79, 73)
 GPIO_X = -38
-GPIO_Y = 3.4
-GPIO_CABLE_START = (GPIO_X, 7.7, 3.7)
-GPIO_CABLE_ENTRY = (GPIO_X, 96, 32)
-GPIO_RIBBON_WIDTH = 12.7
-GPIO_RIBBON_THICKNESS = 0.9
 REFERENCES = ROOT / "docs" / "references" / "tab5"
 sys.path.insert(0, str(ROOT / "scripts"))
 from panel_features import prism
@@ -260,22 +255,27 @@ def lighten_upper_frame(frame, white):
     boolean(frame, cutter, "DIFFERENCE")
 
 
-def add_fixed_cradle_mount(frame, white):
+def fixed_cradle_mount(frame, white):
     axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     # Bonding face follows the tray underside with 0.2 mm for adhesive.
     def seat_height(y):
         angle = radians(CRADLE_ANGLE)
         return PIVOT[2] - 4.7 / cos(angle) - (y - PIVOT[1]) * tan(angle)
 
-    mount = prism("Fixed cradle mount",
-                  [(89, 39), (93, 39), (93, seat_height(93)),
-                   (73, seat_height(73)), (74, 66), (89, 51)],
-                  -29, 29, white)
+    # Match the exposed rear rim with a shallow saddle, keeping the front
+    # foot clear of the removable control panel.
+    foot = []
+    for step in range(19):
+        y = 89.5 + step * 0.25
+        hit, point, *_ = frame.ray_cast(Vector((0, y, 75)), Vector((0, 0, -1)))
+        if not hit:
+            raise ValueError(f"Missing cradle bonding surface at Y={y}")
+        foot.append((y, point.z + 0.2))
+    mount = prism("PRINT fixed cradle mount",
+                  [*foot, (94, seat_height(94)), (73, seat_height(73)),
+                   (74, 66), (89.5, 51)], -29, 29, white)
     mount.data.transform(axes)
-    boolean(frame, mount, "UNION")
-    feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
-    boolean(frame, feedthrough, "DIFFERENCE")
-    frame.name = "NC04 upper frame • fixed cradle mount"
+    return mount
 
 
 def add_tab5(pivot, case, glass, brass):
@@ -383,15 +383,20 @@ def cradle_tray(pivot, white):
         bpy.ops.object.modifier_apply(modifier=bevel.name)
         return part
 
+    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     # Use the same narrow, flat chamfer as the enclosure rim on exposed edges.
     cradle = chamfered_shell_box("White moving cradle", (135, 15, 9), (0, 0, 0), 0.55)
     for side in (-1, 1):
-        seat = box("Integral lower seat", (24, 16, 3.4), (side * 54, 0, 4.65), white, pivot, bevel=0)
+        x = side * 54
+        seat = prism("Integral lower seat",
+                     [(-7.4, 2.95), (7.4, 2.95), (8, 3.55), (8, 6.35),
+                      (-8, 6.35), (-8, 3.55)], x - 12, x + 12, white)
+        seat.data.transform(axes)
+        seat.parent = pivot
         boolean(cradle, seat, "UNION")
         rim = chamfered_shell_box("Integral side stop", (2.6, 15.6, 6.4), (side * 65.9, 0, 6.75), 0.55)
         boolean(cradle, rim, "UNION")
 
-    axes = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     # Two flat pads leave room behind the center of the tablet and accept
     # thin double-sided tape. The lower seat carries the tablet's weight.
     for x in (-45, 45):
@@ -402,7 +407,7 @@ def cradle_tray(pivot, white):
         pad.parent = pivot
         boolean(cradle, pad, "UNION")
 
-    # Tie the two outer seats across the pivot cheek clearances.
+    # The front lip rises on a 45-degree face above the bed.
     bridge = prism("Upper seat bridge",
                    [(-7.3, 3.25), (-6.65, 3.25), (-6.65, 8.1), (-7.2, 8.65), (-8.30, 8.65), (-8.85, 8.1), (-8.85, 4.8)],
                    -62.5, 62.5, white)
@@ -410,68 +415,6 @@ def cradle_tray(pivot, white):
     bridge.parent = pivot
     boolean(cradle, bridge, "UNION")
     return cradle
-
-
-def anchor(name, position, parent=None):
-    empty = bpy.data.objects.new(name, None)
-    bpy.context.collection.objects.link(empty)
-    empty.parent = parent
-    empty.location = position
-    return empty
-
-
-def ribbon_cable(name, positions, finish, parent=None):
-    points = [Vector(position) for position in positions]
-    width = Vector((GPIO_RIBBON_WIDTH / 2, 0, 0))
-    vertices = []
-    for i, point in enumerate(points):
-        tangent = points[min(i + 1, len(points) - 1)] - points[max(i - 1, 0)]
-        depth = tangent.cross(width).normalized() * (GPIO_RIBBON_THICKNESS / 2)
-        vertices.extend((point - width - depth, point + width - depth,
-                         point + width + depth, point - width + depth))
-
-    faces = [(3, 2, 1, 0)]
-    for offset in range(0, len(vertices) - 4, 4):
-        for side in range(4):
-            current = offset + side
-            following = offset + (side + 1) % 4
-            faces.append((current, following, following + 4, current + 4))
-    faces.append(tuple(range(len(vertices) - 4, len(vertices))))
-    mesh = bpy.data.meshes.new(name)
-    mesh.from_pydata(vertices, [], faces)
-    mesh.update()
-    cable = bpy.data.objects.new(name, mesh)
-    bpy.context.collection.objects.link(cable)
-    cable.parent = parent
-    mesh.materials.append(finish)
-    return cable
-
-
-def add_service_loop(start, entry, finish):
-    bpy.context.view_layer.update()
-    p0, p3 = start.matrix_world.translation, entry.matrix_world.translation
-    p1 = p0 + Vector((0, 24, -4))
-    p2 = p3 + Vector((0, 22, 0))
-    points = []
-    for i in range(41):
-        t = i / 40
-        q = 1 - t
-        points.append(q**3 * p0 + 3*q*q*t * p1 + 3*q*t*t * p2 + t**3 * p3)
-    ribbon_cable("GPIO service loop • 30 degree reference", points, finish)
-
-
-def add_gpio_port(cradle, pivot, white, brass):
-    # Ext.Port1 opens on the lower edge of the C145 CAD, not on the rear face.
-    pocket = box("Ext.Port1 underside access cutter", (18, 9, 13), (GPIO_X, 4, 0.4), white, pivot)
-    boolean(cradle, pocket, "DIFFERENCE")
-
-    plastic = material("GPIO connector insulator", (0.036, 0.065, 0.075))
-    box("GPIO 2x5 plug insulator", (13.2, 5.2, 3.6), (GPIO_X, GPIO_Y, 4.6), plastic, pivot)
-    for row in (-1, 1):
-        for column in range(-2, 3):
-            position = (GPIO_X + column * 2.54, GPIO_Y + row * 1.27, 7.65)
-            box("GPIO header pin", (0.64, 0.64, 2.8), position, brass, pivot, bevel=0.05)
-
 
 
 def set_color(material_name, color, emission=False):
@@ -585,8 +528,10 @@ def main():
     expose_led_openings()
     finish_deck_edges(panel, white)
     lighten_upper_frame(upper, white)
-    add_fixed_cradle_mount(upper, white)
+    feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
+    boolean(upper, feedthrough, "DIFFERENCE")
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
+    mount = fixed_cradle_mount(upper, white)
     tray = bpy.data.objects["PRINT_01_lower_tray"]
     diffusers = level_side_lighting(tray, white)
     thin_tray_floor(tray, white)
@@ -602,13 +547,6 @@ def main():
     bpy.context.collection.objects.link(pivot)
     pivot.location = PIVOT
     cradle = cradle_tray(pivot, white)
-    add_gpio_port(cradle, pivot, white, brass)
-    harness = material("GPIO flat ribbon jacket", (0.19, 0.22, 0.25))
-    ribbon_cable("Ext.Port1 plug tail", [(GPIO_X, 5.5, 3.7), GPIO_CABLE_START], harness, pivot)
-    gpio_start = anchor("GpioCableStart", GPIO_CABLE_START, pivot)
-    gpio_start["ribbon_width_mm"] = GPIO_RIBBON_WIDTH
-    gpio_start["ribbon_thickness_mm"] = GPIO_RIBBON_THICKNESS
-    gpio_entry = anchor("GpioCableEntry", GPIO_CABLE_ENTRY)
     add_tab5(pivot, device, display, brass)
     for part, filename in (
         (tray, "NC04_01_lower_tray.stl"),
@@ -617,6 +555,7 @@ def main():
         (cradle, "NC04_04_tab5_cradle.stl"),
     ):
         export_print_part(part, filename)
+    export_print_part(mount, "NC04_12_fixed_cradle_mount.stl", Matrix.Rotation(radians(90), 4, "Y"))
     for diffuser in diffusers:
         side = "left" if "left" in diffuser.name else "right"
         export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")
@@ -624,7 +563,6 @@ def main():
     scene = bpy.context.scene
     pivot.rotation_euler.x = radians(-CRADLE_ANGLE)
     bpy.context.view_layer.update()
-    add_service_loop(gpio_start, gpio_entry, harness)
     camera = scene.camera
     camera.location = (225, -730, 460)
     camera.rotation_euler = (

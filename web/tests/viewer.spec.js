@@ -21,19 +21,12 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
   await expect(page.locator('.hardware-details')).toContainText('後傾15°で固定');
-  await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
-  const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
+  await expect(page.locator('.hardware-details')).toContainText('GPIO開口なし');
+  const gpioView=page.getByRole('button',{name:'クレードルの下側を見る'});
   await gpioView.click();
   await expect(gpioView).toHaveAttribute('aria-pressed','true');
   const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5CradleMount').rotation.x);
   await expect.poll(readTilt).toBeCloseTo(-Math.PI/12,3);
-  const ribbonStart=()=>page.locator('#viewer').evaluate(v=>{
-    const points=v.arcade.scene.getObjectByName('GPIO flat ribbon service loop')?.geometry.getAttribute('position');
-    return points&&{width:points.getX(1)-points.getX(0),depth:Math.hypot(
-      points.getY(2)-points.getY(1),points.getZ(2)-points.getZ(1)),start:points.getY(0)};
-  });
-  await expect.poll(async()=> (await ribbonStart())?.width).toBeCloseTo(12.7,3);
-  expect((await ribbonStart()).depth).toBeCloseTo(.9,3);
   await page.locator('#viewer').focus();
   for(const [key,view] of [['X','front'],['C','right'],['V','rear'],['B','top'],['Z','hero']]){
     await page.keyboard.press(key);
@@ -59,7 +52,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     return {plates:groups.length,parts:groups.reduce((n,group)=>n+group.userData.partCount,0),
       positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
   });
-  expect(overview).toEqual({plates:6,parts:11,positions:6});
+  expect(overview).toEqual({plates:6,parts:12,positions:6});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
   await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
   await page.locator('#print-plate').selectOption('3');
@@ -69,9 +62,9 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     const tablet=v.arcade.scene.getObjectByName('Tab5CradleMount');
     return {parts:group.userData.partCount,tabletVisible:tablet.visible};
   });
-  expect(plate).toEqual({parts:1,tabletVisible:false});
+  expect(plate).toEqual({parts:2,tabletVisible:false});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(1);
-  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約41分');
+  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約1時間3分');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#print-plate-controls')).toBeHidden();
   await expect(page.locator('#print-annotations')).toBeHidden();
@@ -226,7 +219,19 @@ test('RGB animation, spring controls, background color and SSAO tuning',async({p
   await expect.poll(()=>page.locator('#viewer').evaluate(v=>v.arcade.snapshot().stick.tiltDegrees)).toBeGreaterThan(8);
   await page.mouse.up();
   await expect.poll(()=>page.locator('#viewer').evaluate(v=>v.arcade.snapshot().stick.tiltDegrees),{timeout:4000}).toBeLessThan(.2);
-  expect(await page.locator('#viewer').evaluate(v=>Boolean(v.arcade.scene.getObjectByName('Tab5DisplaySurface').material.map.isCanvasTexture))).toBe(true);
+  const preview=await page.locator('#viewer').evaluate(v=>{
+    const canvas=v.arcade.scene.getObjectByName('Tab5DisplaySurface').material.map.image;
+    const color=(x,y)=>Array.from(canvas.getContext('2d').getImageData(x,y,1,1).data);
+    const before=color(465,375);
+    v.arcade.press('B1',true,'tab5-preview-test');
+    const pressed=color(465,375), log=color(1045,625);
+    v.arcade.press('B1',false,'tab5-preview-test');
+    return {width:canvas.width,height:canvas.height,before,pressed,log,after:color(465,375),logAfterRelease:color(1045,625)};
+  });
+  expect([preview.width,preview.height]).toEqual([1280,720]);
+  expect(preview.pressed).not.toEqual(preview.before);
+  expect(preview.after).toEqual(preview.before);
+  expect(preview.logAfterRelease).toEqual(preview.log);
   await page.locator('#tab5-turbo').check({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.arcade.turbo)).toBe(true);
   await page.locator('#tab5-macro').selectOption('JKL');
