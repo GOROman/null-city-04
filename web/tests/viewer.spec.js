@@ -247,5 +247,7 @@ test('RGB animation, spring controls, background color and SSAO tuning',async({p
   await expect(page.locator('#background-color')).toHaveValue('#131a35');
   await expect(page.locator('#ssao-strength')).toHaveValue('1.4');
   await expect(page.locator('#ssao-strength-value')).toHaveText('1.4');
+  await expect(page.locator('#ssao-radius')).toHaveValue('7.5');
+  await expect(page.locator('#ssao-radius-value')).toHaveText('7.5%');
   expect(errors).toEqual([]);
 });

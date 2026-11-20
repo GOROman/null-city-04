@@ -342,7 +342,7 @@ function reset(){
   playMode.checked=false;setPlayMode();
   turbo.checked=false;macro.value='UIO';arcade?.setTurbo(false);refreshTab5();
   rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
-  backgroundColor.value=backgroundColor.defaultValue;grid.checked=true;ssaoStrength.value=ssaoStrength.defaultValue;ssaoRadius.value='5';
+  backgroundColor.value=backgroundColor.defaultValue;grid.checked=true;ssaoStrength.value=ssaoStrength.defaultValue;ssaoRadius.value=ssaoRadius.defaultValue;
   assembly.value='0';plateSelect.value='all';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
   environment.value='studio03';environmentAngle.value='90';background.checked=false;ssaoEnabled.checked=true;
   setAssembly();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
