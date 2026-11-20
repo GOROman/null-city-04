@@ -2,7 +2,7 @@
 
 NC-04は、M5Stack Tab5を15°後傾の固定受け皿に載せて使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5の固定クレードルと、VF2向けのUSB・BLEジョイスティックを追加しました。
 
-![白いNC-04筐体とIntelligent Stick画面のTab5を斜め正面から写した製品レンダー](preview-nc04.jpg)
+![白いNC-04筐体とシアンの天板、Intelligent Stick画面のTab5を斜め正面から写した製品レンダー](preview-nc04.jpg)
 
 [3Dで見る](https://goroman.github.io/null-city-04/) · [Tab5に書き込む](firmware/README.md#ビルド書き込み) · [3Dプリント設定](PRINT_SETTINGS.md)
 
@@ -48,7 +48,7 @@ Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、
 
 ## 筐体を作る
 
-H3Cで一式を新造する場合は、下ケース、上フレーム、天板、クレードル一式、脚、ライトカバーの6プレート構成です。本体はPLA、ライトカバーは乳白・半透明PLAを想定しています。 [造形配置を3Dで見る](https://goroman.github.io/null-city-04/) · [造形設定と見積もり](PRINT_SETTINGS.md)
+H3Cで一式を新造する場合は、下ケース、上フレーム、天板、クレードル一式、脚、ライトカバーの6プレート構成です。本体は白PLA、天板はシアンPLA、脚は黒TPU、ライトカバーは乳白・半透明PLAを想定しています。 [造形配置を3Dで見る](https://goroman.github.io/null-city-04/) · [造形設定と見積もり](PRINT_SETTINGS.md)
 
 ![H3Cの造形プレビュー。左プレートに上フレーム、右プレートにクレードルと固定台](docs/images/nc04-h3c-print-preview.jpg)
 
@@ -58,8 +58,9 @@ H3Cで一式を新造する場合は、下ケース、上フレーム、天板�
 |---|---|
 | 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
 | 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [上フレーム3MF](print/h3c/NC04-fixed-frame-04-supertack.3mf) · 0.4 mm標準、約3時間5分 |
-| 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
+| 天板 | [STL](STL/NC04_03_control_panel.stl) · [シアンPLA用3MF](print/h3c/NC04-cyan-panel-04-supertack.3mf) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
 | クレードルと固定台 | [同一プレートの3MF](print/h3c/NC04-fixed-cradle-04-supertack.3mf) · 白PLA、約1時間3分 · [受け皿STL](STL/NC04_04_tab5_cradle.stl) · [固定台STL](STL/NC04_12_fixed_cradle_mount.stl) |
+| 脚4個 | [黒TPU用3MF](print/h3c/05_TPU_feet.3mf) · Textured PEI、約31分 |
 | ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
 固定台はクレードルと同じプレートで印刷する別部品です。固定台を上フレームの後端中央に接着し、Tab5を後傾15°で固定します。

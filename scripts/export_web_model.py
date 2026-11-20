@@ -34,7 +34,7 @@ def displacement(name):
     if name.startswith('Deck M3x40 screw'):return (0,0,104)
     if name.startswith('Deck M3 insert'):return (0,0,13)
     if name.startswith('Flush cyan pinstripe'):return (0,0,70)
-    if name.startswith('PRINT_PLA'):return (0,0,-12)
+    if name.startswith('PRINT_TPU_foot'):return (0,0,-12)
     if name=='PRINT_light_front_diffuser' or name.startswith(('VISUAL_front_mask','VISUAL_NULL_CITY_wordmark','VISUAL_front_slash')):return (0,-22,0)
     if name=='PRINT_light_left_diffuser':return (-22,0,0)
     if name=='PRINT_light_right_diffuser':return (22,0,0)

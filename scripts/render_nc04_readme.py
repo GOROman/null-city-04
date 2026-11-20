@@ -99,10 +99,11 @@ def render_hero():
     surface.inputs["Roughness"].default_value = .58
     surface_grain(floor, .55, .32, .32)
 
-    pla = bpy.data.materials["NC-04 white PLA"]
-    surface = pla.node_tree.nodes.get("Principled BSDF")
-    surface.inputs["Roughness"].default_value = .37
-    surface_grain(pla, 2.8, .055, .24)
+    for name in ("NC-04 white PLA", "NC-04 cyan PLA deck"):
+        pla = bpy.data.materials[name]
+        surface = pla.node_tree.nodes.get("Principled BSDF")
+        surface.inputs["Roughness"].default_value = .37
+        surface_grain(pla, 2.8, .055, .24)
     bpy.data.materials["Tab5 HUD display"].node_tree.nodes.get(
         "Principled BSDF").inputs["Emission Strength"].default_value = 1.15
 

@@ -16,6 +16,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   const model=await page.locator('#viewer').evaluate(v=>({size:v.getDimensions(),animations:v.availableAnimations,materials:v.model.materials.map(m=>m.name)}));
   expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2022,3);
   expect(model.animations).toEqual(['Assembly']);
+  expect(model.materials).toContain('NC-04 cyan PLA deck');
   expect(model.materials).toContain('Tab5 rear • M5Stack reference photograph');
   await page.locator('.hardware-details summary').click();
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
@@ -55,6 +56,8 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   expect(overview).toEqual({plates:6,parts:12,positions:6});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
   await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
+  await expect(page.locator('.print-annotation').nth(2)).toContainText('シアンPLA');
+  await expect(page.locator('.print-annotation').nth(4)).toContainText('黒TPU');
   await page.locator('#print-plate').selectOption('3');
   await expect(page.locator('#load-status')).toHaveText('造形配置 · プレート 4');
   const plate=await page.locator('#viewer').evaluate(v=>{

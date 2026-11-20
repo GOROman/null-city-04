@@ -103,7 +103,7 @@ function showPrintAnnotations(group){
     const details=document.createElement('span');
     tag.className='print-annotation';
     title.textContent=`${index+1} · ${spec.name}`;
-    details.textContent=`${spec.translucent?'乳白・半透明 PLA':'白PLA'} · 約${duration}`;
+    details.textContent=`${spec.material??(spec.translucent?'乳白・半透明 PLA':'白PLA')} · 約${duration}`;
     tag.append(title,details);
     annotations.append(tag);
     return {plate,tag};
@@ -358,7 +358,7 @@ viewer.addEventListener('load',()=>{
   const ledStrengths={'Backlit translucent PLA illustration':5,'Magenta lighting illustration':5,'Indicator LED RGB':4,'Cool white lettering':3};
   for(const {material} of emissive){if(ledStrengths[material.name])material.setEmissiveStrength(ledStrengths[material.name]);}
   selectLEDMeshes();
-  caseMaterials=viewer.model.materials.filter(material=>material.name==='NC-04 white PLA').map(material=>({material,color:[...material.pbrMetallicRoughness.baseColorFactor],alpha:material.getAlphaMode(),doubleSided:material.getDoubleSided()}));
+  caseMaterials=viewer.model.materials.filter(material=>['NC-04 white PLA','NC-04 cyan PLA deck'].includes(material.name)).map(material=>({material,color:[...material.pbrMetallicRoughness.baseColorFactor],alpha:material.getAlphaMode(),doubleSided:material.getDoubleSided()}));
   viewer.animationName='Assembly';viewer.pause();viewer.currentTime=0;reset();
   arcade?.dispose();arcade=new Arcade(viewer,composer,environmentPass,reportInput);viewer.arcade=arcade;
   bindTab5Display();setRGB();setLights();selectLEDMeshes();

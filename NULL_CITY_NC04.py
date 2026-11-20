@@ -539,9 +539,10 @@ def main():
     finish_shell_edge(tray, 3, 149, 94, 8, 0.85)
     add_deck_hardware(tray, upper, bpy.data.objects["PRINT_03_control_panel"], hardware, brass)
     white.name = "NC-04 white PLA"
-    for part in bpy.context.scene.objects:
-        if part.name.startswith("PRINT_TPU"):
-            part.name = part.name.replace("PRINT_TPU", "PRINT_PLA", 1)
+    cyan = material("NC-04 cyan PLA deck", (0.0, 0.462, 0.687))
+    cyan.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = .36
+    for index in range(len(panel.data.materials)):
+        panel.data.materials[index] = cyan
 
     pivot = bpy.data.objects.new("Tab5 cradle • fixed mount", None)
     bpy.context.collection.objects.link(pivot)
