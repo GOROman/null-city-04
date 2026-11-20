@@ -40,11 +40,11 @@ Tab5背面の30ピンM5-Busから、レバー4方向とG・P・K・COIN・1Pを�
 | AKIRA SPECIAL | 崩撃雲身双虎掌。中央＋P＋K＋G → 中央 → 4 → 3＋P＋K → 中央 → 2 → 4＋P。2段目はF0+7付近、3段目はF0+22付近。 [VF2 2.1の入力検証](https://gist.github.com/GOROman/8352505984b88a74981f474c0f3af482) |
 | 1000 PUNCH | 押している間だけP → K → 待機 → G → 待機を繰り返す。指を離すかボタンの外へ移すと停止 |
 | FACE RIGHT / LEFT | 対戦中のキャラクターの向き。左向きでは方向コマンドを左右反転 |
-| WAIT 70 MS | タップでG前／G後の待機を70／80 → 105／480 → 52／175 msに切り替える |
+| PKG TUNE | Kを離してからGまで、Gを離してから次のPまでをそれぞれ5 ms刻みで調整。再タップでログに戻る |
 
 技プリセットは1回ずつ送ります。マクロ録画中は手動入力を記録します。独歩頂膝の最初の入力は約17 msです。技が成立するかはゲーム側の入力ポーリングや、対戦中の距離・タイミングにも依存します。 [セガのコマンド表（メガドライブ版）](https://vc.sega.jp/vc_vf2/w_akira.html)
 
-千本パンチの初期値はP 100 ms、K 35 ms、無入力70 ms、G 18 ms、無入力80 msの一周303 msです。ゲーム内での成立タイミングは未確認です。 [セガ開発者インタビュー](https://www.sega.jp/fb/segavoice/041014/01_2.html) · [P→K→Gの解説](https://blog.ja.playstation.com/?p=50)
+千本パンチの初期値はP 100 ms、K 35 ms、無入力70 ms、G 18 ms、無入力80 msの一周303 msです。調整値は再起動で初期値に戻ります。動画から各ボタンの正確な時刻は確認できず、ゲーム内での成立タイミングは未確認です。 [VF2.0 千本パンチ実演](https://www.youtube.com/watch?v=vesM_U9XENw) · [VF2 FAQ実演](https://www.youtube.com/watch?v=R-faQgcEC74) [セガ開発者インタビュー](https://www.sega.jp/fb/segavoice/041014/01_2.html) · [P→K→Gの解説](https://blog.ja.playstation.com/?p=50)
 
 ## ビルド・書き込み
 

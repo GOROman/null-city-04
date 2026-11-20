@@ -81,9 +81,20 @@ public:
         return move | (inputs & (inputBit(Coin) | inputBit(Start) | inputBit(Player2)));
     }
 
-    void cycleRapidSpeed() { rapidSpeed = (rapidSpeed + 1) % 3; }
-    uint8_t rapidSpeedIndex() const { return rapidSpeed; }
-    uint8_t rapidWaitMs() const { return rapidWaits[rapidSpeed].beforeGuard; }
+    uint16_t rapidWaitMs(bool afterGuard) const {
+        return afterGuard ? afterGuardMs : beforeGuardMs;
+    }
+
+    void adjustRapidWait(bool afterGuard, int delta) {
+        uint16_t &value = afterGuard ? afterGuardMs : beforeGuardMs;
+        const int next = static_cast<int>(value) + delta;
+        value = next < 0 ? 0 : next > 500 ? 500 : next;
+    }
+
+    void resetRapidWaits() {
+        beforeGuardMs = 70;
+        afterGuardMs = 80;
+    }
 
     uint16_t rapidSequence(bool held, uint32_t now) {
         if (held && !rapidHeld) {
@@ -92,13 +103,12 @@ public:
         }
         rapidHeld = held;
         if (!held) return 0;
-        const RapidWait timing = rapidWaits[rapidSpeed];
-        const Step sequence[] = {
-            {p, 100}, {k, 35}, {0, timing.beforeGuard}, {g, 18}, {0, timing.afterGuard},
-        };
+        const Step sequence[] = {{p, 100}, {k, 35}, {0, beforeGuardMs}, {g, 18}, {0, afterGuardMs}};
         if (now - rapidSince >= sequence[rapidIndex].duration) {
             rapidSince = now;
-            rapidIndex = (rapidIndex + 1) % (sizeof(sequence) / sizeof(sequence[0]));
+            do {
+                rapidIndex = (rapidIndex + 1) % (sizeof(sequence) / sizeof(sequence[0]));
+            } while (!sequence[rapidIndex].duration);
         }
         return sequence[rapidIndex].inputs;
     }
@@ -116,9 +126,8 @@ private:
     };
     Move selected = Knee;
     bool playing = false, right = true, rapidHeld = false;
-    struct RapidWait { uint8_t beforeGuard; uint16_t afterGuard; };
-    static constexpr RapidWait rapidWaits[] = {{52, 175}, {70, 80}, {105, 480}};
-    uint8_t index = 0, rapidIndex = 0, rapidSpeed = 1;
+    uint16_t beforeGuardMs = 70, afterGuardMs = 80;
+    uint8_t index = 0, rapidIndex = 0;
     uint32_t since = 0, rapidSince = 0;
 };
 

@@ -96,6 +96,7 @@ Macro macro;
 Presets presets;
 bool facingRight = true;
 bool rapidHeld = false;
+bool tuningPkg = false;
 InputLog inputLog;
 constexpr unsigned logEntriesPerPage = 7;
 unsigned logOffset = 0;
@@ -182,6 +183,9 @@ struct ControlsLayout {
     int logFooterTop() const { return height * 91 / 100; }
     int logFooterHeight() const { return height * 7 / 100; }
     int logActionWidth() const { return logWidth() / 3; }
+    int tuneRowTop(bool afterGuard) const { return logTop() + height * (afterGuard ? 26 : 13) / 100; }
+    int tuneRowHeight() const { return height * 9 / 100; }
+    int tuneButtonWidth() const { return logWidth() * 30 / 100; }
     int presetTop() const { return height * 70 / 100; }
     int presetHeight() const { return height * 12 / 100; }
     int macroTop() const { return height * 84 / 100; }
@@ -210,6 +214,25 @@ struct ControlsLayout {
 };
 
 void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
+    if (tuningPkg && x >= layout.logLeft()) {
+        const int column = x - layout.logLeft();
+        if (column >= layout.logWidth()) return;
+        for (bool after : {false, true}) {
+            const int row = layout.tuneRowTop(after);
+            if (y >= row && y < row + layout.tuneRowHeight()) {
+                const int buttonWidth = layout.tuneButtonWidth();
+                if (column < buttonWidth) presets.adjustRapidWait(after, -5);
+                else if (column >= layout.logWidth() - buttonWidth) presets.adjustRapidWait(after, 5);
+                logNeedsDraw = true;
+                return;
+            }
+        }
+        if (y >= layout.logFooterTop() && y < layout.logFooterTop() + layout.logFooterHeight()) {
+            presets.resetRapidWaits();
+            logNeedsDraw = true;
+        }
+        return;
+    }
     if (y >= layout.logFooterTop() && y < layout.logFooterTop() + layout.logFooterHeight() &&
         x >= layout.logLeft() && x < layout.logLeft() + 3 * layout.logActionWidth()) {
         const int action = (x - layout.logLeft()) / layout.logActionWidth();
@@ -229,7 +252,8 @@ void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
         } else if (preset == 3) {
             facingRight = !facingRight;
         } else if (preset == 4) {
-            presets.cycleRapidSpeed();
+            tuningPkg = !tuningPkg;
+            logNeedsDraw = true;
         }
     } else if (x < layout.controlsWidth() &&
                y >= layout.macroTop() && y < layout.macroTop() + layout.macroHeight()) {
@@ -363,6 +387,32 @@ void drawLogButtons(int x, int y, const InputLog::Entry &entry) {
     }
 }
 
+void drawPkgTuning(const ControlsLayout &layout) {
+    auto &screen = M5.Display;
+    const int x = layout.logLeft(), top = layout.logTop(), width = layout.logWidth();
+    screen.startWrite();
+    screen.fillRect(x, top, width, layout.logFooterTop() + layout.logFooterHeight() - top, 0x0842);
+    screen.setFont(&bodyFont);
+    screen.setTextColor(0x7dd9, 0x0842);
+    screen.drawString("PKG TIMING", x + 2, top);
+    screen.setTextSize(.72f);
+    for (bool after : {false, true}) {
+        const int row = layout.tuneRowTop(after), rowHeight = layout.tuneRowHeight();
+        const int buttonWidth = layout.tuneButtonWidth();
+        screen.setTextColor(0x7dd9, 0x0842);
+        screen.drawString(after ? "G TO NEXT P" : "K TO G", x + 2, row - screen.fontHeight());
+        tile(x, row, buttonWidth, rowHeight, "LESS", false);
+        tile(x + width - buttonWidth, row, buttonWidth, rowHeight, "MORE", false);
+        char duration[16];
+        snprintf(duration, sizeof(duration), "%u MS", static_cast<unsigned>(presets.rapidWaitMs(after)));
+        screen.setTextColor(0xe75d, 0x0842);
+        screen.drawCenterString(duration, x + width / 2, row + (rowHeight - screen.fontHeight()) / 2);
+    }
+    tile(x, layout.logFooterTop(), width, layout.logFooterHeight(), "RESET 70 80", false);
+    screen.setTextSize(1);
+    screen.endWrite();
+}
+
 void drawInputLog(const ControlsLayout &layout) {
     auto &screen = M5.Display;
     const int x = layout.logLeft();
@@ -470,9 +520,7 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         tile(2 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), "1000 PUNCH", rapidHeld);
         tile(3 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(),
              facingRight ? "FACE RIGHT" : "FACE LEFT", false);
-        char timing[18];
-        snprintf(timing, sizeof(timing), "WAIT %u MS", static_cast<unsigned>(presets.rapidWaitMs()));
-        tile(4 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), timing, false);
+        tile(4 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), "PKG TUNE", tuningPkg);
         screen.setTextSize(1);
     }
     if (first || (changed & (1u << 18))) {
@@ -502,7 +550,7 @@ void setup() {
 void loop() {
     static Report lastUsb{}, lastBle{};
     static uint32_t lastBleReport = 0;
-    static bool usbWasReady = false;
+    static bool usbWasReady = false, lastTuningView = false;
     static uint32_t lastDraw = 0, lastVisual = UINT32_MAX, lastLogDraw = 0;
     const uint32_t now = millis();
     usb.handleDownloadRequest();
@@ -524,7 +572,7 @@ void loop() {
         if (logOffset) {
             logOffset = min<unsigned>(logOffset + 1, inputLog.size() - 1);
         }
-        logNeedsDraw = true;
+        if (!tuningPkg) logNeedsDraw = true;
     }
 
     const bool usbReady = usb.connected();
@@ -553,7 +601,7 @@ void loop() {
                             (macro.isPlaying() ? 1u << 19 : 0) |
                             (static_cast<uint32_t>(macro.size()) << 20) |
                             (facingRight ? 1u << 27 : 0) | (rapidHeld ? 1u << 28 : 0) |
-                            (static_cast<uint32_t>(presets.rapidSpeedIndex()) << 29);
+                            (tuningPkg ? 1u << 29 : 0);
     const uint32_t frameTime = micros();
     if (!presets.active() && frameTime - lastDraw >= frameIntervalUs) {
         const uint32_t elapsedFrames = (frameTime - lastDraw) / frameIntervalUs;
@@ -573,7 +621,16 @@ void loop() {
         const uint32_t logAge = now - lastLogDraw;
         const bool stickIdle = old.x == next.x && old.y == next.y;
         if (logNeedsDraw && (first || (logAge >= 50 && stickIdle) || logAge >= 150)) {
-            drawInputLog(layout);
+            if (tuningPkg) {
+                drawPkgTuning(layout);
+            } else {
+                if (lastTuningView) {
+                    M5.Display.fillRect(layout.logLeft(), layout.logTop(), layout.logWidth(),
+                                        layout.logFooterTop() + layout.logFooterHeight() - layout.logTop(), 0x0842);
+                }
+                drawInputLog(layout);
+            }
+            lastTuningView = tuningPkg;
             logNeedsDraw = false;
             lastLogDraw = now;
         }
