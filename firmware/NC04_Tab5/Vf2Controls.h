@@ -128,15 +128,20 @@ public:
         uint32_t timeMs;
         Report before;
         Report after;
+
+        uint8_t pressedButtons() const { return after.buttons & ~before.buttons; }
+        bool movedLever() const {
+            return (after.x || after.y) && (after.x != before.x || after.y != before.y);
+        }
     };
     static constexpr uint8_t capacity = 64;
 
     bool observe(const Report &report, uint32_t now) {
         if (!report.differs(previous)) return false;
-        const Report before = previous;
+        const Entry entry{now, previous, report};
         previous = report;
-        if (!report.x && !report.y && report.buttons == before.buttons) return false;
-        entries[next] = {now, before, report};
+        if (!entry.pressedButtons() && !entry.movedLever()) return false;
+        entries[next] = entry;
         next = (next + 1) % capacity;
         if (used < capacity) ++used;
         return true;

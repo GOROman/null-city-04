@@ -350,15 +350,14 @@ void drawLogArrow(int x, int y, const Report &report) {
 
 void drawLogButtons(int x, int y, const InputLog::Entry &entry) {
     auto &screen = M5.Display;
-    const uint8_t visible = entry.before.buttons | entry.after.buttons;
+    const uint8_t pressed = entry.pressedButtons();
     for (unsigned button = 0; button < Count - Guard; ++button) {
         const uint8_t mask = 1u << button;
-        if (!(visible & mask)) continue;
-        const bool pressed = entry.after.buttons & mask;
-        if (pressed) screen.fillCircle(x, y, 13, 0x4efa);
-        screen.drawCircle(x, y, 13, pressed ? 0xa7ff : 0x7dd9);
+        if (!(pressed & mask)) continue;
+        screen.fillCircle(x, y, 13, 0x4efa);
+        screen.drawCircle(x, y, 13, 0xa7ff);
         screen.setTextSize(button == Coin - Guard ? .36f : .55f);
-        screen.setTextColor(pressed ? 0x0842 : 0xe75d, pressed ? 0x4efa : 0x10c6);
+        screen.setTextColor(0x0842, 0x4efa);
         screen.drawCenterString(buttonNames[button], x, y - screen.fontHeight() / 2);
         x += 29;
     }
