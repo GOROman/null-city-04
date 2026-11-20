@@ -64,6 +64,8 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
       positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
   });
   expect(overview).toEqual({plates:6,parts:15,positions:6});
+  await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
+  await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
   await page.locator('#print-plate').selectOption('3');
   await expect(page.locator('#load-status')).toHaveText('造形配置 · プレート 4');
   const plate=await page.locator('#viewer').evaluate(v=>{
@@ -72,8 +74,11 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     return {parts:group.userData.partCount,tabletVisible:tablet.visible};
   });
   expect(plate).toEqual({parts:3,tabletVisible:false});
+  await expect(page.locator('.print-annotation:visible')).toHaveCount(1);
+  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約44分');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#print-plate-controls')).toBeHidden();
+  await expect(page.locator('#print-annotations')).toBeHidden();
   expect(await page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').visible)).toBe(true);
   await page.locator('#led').uncheck({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.filter(m=>m.name!=='Tab5 HUD display').every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
@@ -161,6 +166,14 @@ test('EV changes rendered brightness and LED emission survives without IBL',asyn
   await page.locator('#viewer').scrollIntoViewIfNeeded();
   await changeAndRender(page,()=>page.locator('#composer').evaluate(c=>c.queueRender()));
   const normal=await luminance(page);
+  const toggleSSAO=checked=>page.locator('#ssao-enabled').evaluate((input,value)=>{
+    input.checked=value;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  },checked);
+  await changeAndRender(page,()=>toggleSSAO(false));
+  const noSSAO=await luminance(page);
+  expect(noSSAO).toBeGreaterThan(normal+.15);
+  await changeAndRender(page,()=>toggleSSAO(true));
   await changeAndRender(page,()=>page.locator('#exposure').evaluate(e=>{e.value='-1';e.dispatchEvent(new Event('input',{bubbles:true}));}));
   await expect(page.locator('#exposure-value')).toHaveText('-1.0 EV');
   expect(await page.locator('#viewer').evaluate(v=>v.exposure)).toBeCloseTo(.4,4);

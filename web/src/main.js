@@ -4,7 +4,7 @@ import {Arcade} from './arcade.js';
 import {EnvironmentRotationPass} from './environment-pass.js';
 import {BufferGeometry, CanvasTexture, CubicBezierCurve3, Float32BufferAttribute, Mesh, MeshStandardMaterial, SRGBColorSpace, Vector3} from 'three';
 import {drawTab5} from './tab5-display.js';
-import {buildPrintLayout, disposePlate, plates} from './print-layout.js';
+import {bed, buildPrintLayout, disposePlate, plates} from './print-layout.js';
 import './style.css';
 
 const viewer=document.querySelector('#viewer');
@@ -14,6 +14,9 @@ const status=document.querySelector('#load-status');
 const assembly=document.querySelector('#assembly');
 const plateControls=document.querySelector('#print-plate-controls');
 const plateSelect=document.querySelector('#print-plate');
+const annotations=document.querySelector('#print-annotations');
+let annotationFrame=0;
+const projectedPlateAnchor=new Vector3();
 plateSelect.add(new Option('全6プレート','all'));
 plates.forEach(({name},index)=>plateSelect.add(new Option(`${index+1} · ${name}`,String(index))));
 let printMode=false, printPlate, plateRequest=0, assemblyVisibility=new Map();
@@ -83,8 +86,50 @@ function setView(name){
   viewButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===name)));
   frameCurrentView();
 }
+function clearPrintAnnotations(){
+  cancelAnimationFrame(annotationFrame);
+  annotations.hidden=true;
+  annotations.replaceChildren();
+}
+function showPrintAnnotations(group){
+  const groups=group.name==='NC04PrintLayout'?group.children:[group];
+  const labels=groups.map(plate=>{
+    const index=plate.userData.plateIndex;
+    const spec=plates[index];
+    const minutes=Math.round(spec.seconds/60);
+    const duration=minutes>=60?`${Math.floor(minutes/60)}時間${minutes%60}分`:`${minutes}分`;
+    const tag=document.createElement('div');
+    const title=document.createElement('strong');
+    const details=document.createElement('span');
+    tag.className='print-annotation';
+    title.textContent=`${index+1} · ${spec.name}`;
+    details.textContent=`${spec.translucent?'乳白・半透明 PLA':'白PLA'} · 約${duration}`;
+    tag.append(title,details);
+    annotations.append(tag);
+    return {plate,tag};
+  });
+  annotations.hidden=false;
+  function positionLabels(){
+    const camera=environmentPass.camera;
+    if(!printMode||!camera)return;
+    camera.updateMatrixWorld(true);
+    const viewport=viewer.getBoundingClientRect();
+    const stageBounds=stage.getBoundingClientRect();
+    for(const {plate,tag} of labels){
+      projectedPlateAnchor.set(0,2,bed.depth*.42);
+      plate.localToWorld(projectedPlateAnchor).project(camera);
+      const {x,y,z}=projectedPlateAnchor;
+      tag.hidden=z<-1||z>1||Math.abs(x)>1||Math.abs(y)>1;
+      tag.style.left=`${viewport.left-stageBounds.left+(x+1)*viewport.width/2}px`;
+      tag.style.top=`${viewport.top-stageBounds.top+(1-y)*viewport.height/2}px`;
+    }
+    annotationFrame=requestAnimationFrame(positionLabels);
+  }
+  annotationFrame=requestAnimationFrame(positionLabels);
+}
 async function renderPrintPlate(){
   const request=++plateRequest;
+  clearPrintAnnotations();
   if(printPlate){disposePlate(printPlate);printPlate=null;}
   status.textContent='造形プレートを読み込み中…';
   try{
@@ -95,6 +140,7 @@ async function renderPrintPlate(){
     if(!root){disposePlate(group);return;}
     printPlate=group;
     root.add(group);
+    showPrintAnnotations(group);
     status.textContent=selection==='all'?'造形配置 · 全6プレート':`造形配置 · プレート ${Number(selection)+1}`;
     environmentPass.scene.queueShadowRender?.();
     composer.queueRender();
@@ -116,6 +162,7 @@ function setPrintMode(active){
     renderPrintPlate();
   }else if(!active){
     ++plateRequest;
+    clearPrintAnnotations();
     if(printPlate){disposePlate(printPlate);printPlate=null;}
     for(const [child,visible] of assemblyVisibility)child.visible=visible;
     assemblyVisibility.clear();
@@ -267,7 +314,12 @@ function setEnvironment(){
 }
 function setSSAO(){
   ssao.blendMode=ssaoEnabled.checked?'DEFAULT':'SKIP';
-  ssao.strength=Number(ssaoStrength.value);ssao.effects[0].ssaoMaterial.radius=Number(ssaoRadius.value)/100;
+  ssao.strength=Number(ssaoStrength.value);
+  const effect=ssao.effects[0];
+  effect.luminanceInfluence=.15;
+  effect.ssaoMaterial.bias=.0015;
+  effect.ssaoMaterial.fade=.003;
+  effect.ssaoMaterial.radius=Number(ssaoRadius.value)/100;
   document.querySelector('#ssao-strength-value').value=Number(ssaoStrength.value).toFixed(1);
   document.querySelector('#ssao-radius-value').value=`${Number(ssaoRadius.value)}%`;
   ssaoStrength.disabled=ssaoRadius.disabled=!ssaoEnabled.checked;composer.queueRender();

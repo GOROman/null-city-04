@@ -54,7 +54,7 @@
           <div class="print-plate-controls" id="print-plate-controls" hidden>
             <label class="environment-label" for="print-plate">H3C 造形プレート</label>
             <select id="print-plate"></select>
-            <p>330 × 320 mm の全6プレートを表示します。個別表示への切り替えもできます。</p>
+            <p>330 × 320 mm。時間は H3C、0.4 mm ノズル、積層 0.20 mm、エンジニアリングプレートの見積もりです。</p>
           </div>
           <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
           <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
@@ -139,6 +139,7 @@
         </effect-composer>
         <div slot="progress-bar" class="load-progress"><progress id="progress" max="1" value="0" aria-label="3Dモデルの読み込み"></progress></div>
       </model-viewer>
+      <div class="print-annotations" id="print-annotations" aria-label="各プレートの素材と推定造形時間" hidden></div>
       <div class="error-panel" id="error-panel" hidden><strong>3Dモデルを読み込めませんでした</strong><p>接続とWebGLの対応をご確認ください。下のリンクからモデルもダウンロードできます。</p><button id="retry" type="button">再読み込み</button></div>
       <div class="stage-bottom">
         <div class="view-bar" role="group" aria-label="視点を切り替える">

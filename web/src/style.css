@@ -53,3 +53,41 @@
 .print-plate-controls { margin: 12px 0; }
 .print-plate-controls[hidden] { display: none; }
 .print-plate-controls p { color: var(--muted); font-size: 10px; line-height: 1.6; }
+
+.print-annotations { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.print-annotations[hidden] { display: none; }
+.print-annotation {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform: translate(-50%, calc(-100% - 6px));
+  padding: 5px 8px;
+  width: max-content;
+  max-width: min(145px, 26vw);
+  border: 1px solid #3584a0;
+  border-left: 2px solid #41c8eb;
+  border-radius: 3px;
+  background: #142737f2;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.35;
+  box-shadow: 0 2px 7px #07182548;
+}
+.print-annotation span { color: #bfe9f4; font-size: 9px; }
+.print-annotation::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 7px;
+  background: #41c8eb;
+}
+
+.print-annotation[hidden] { display: none; }
+@media(max-width:700px) {
+  .print-annotation { padding: 3px 4px; font-size: 9px; }
+  .print-annotation strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .print-annotation span { font-size: 8px; white-space: nowrap; }
+}
