@@ -1,5 +1,6 @@
 """Build the NC-04 Tab5 dock and enclosure study from the NC-03 assembly."""
 
+import json
 from math import radians
 import struct
 import sys
@@ -191,6 +192,15 @@ def add_flat_graphics(ink, accent):
         decal(name + " flat decal", "NULL CITY IV", surface, 65, ink, font)
 
 
+def expose_led_openings():
+    # The NC-03 deck already has through cuts and rear module seats. Remove the
+    # near-surface luminous placeholders so the NC-04 openings render uncovered.
+    layout = json.loads((ROOT / "artwork" / "led_layout.json").read_text())
+    for led in layout["leds"]:
+        placeholder = bpy.data.objects["VISUAL_LED_" + led["name"]]
+        bpy.data.objects.remove(placeholder, do_unlink=True)
+
+
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(ROOT / "NULL_CITY_NC03.blend"))
     white = bpy.data.materials["Pearl white PETG"]
@@ -206,6 +216,7 @@ def main():
     set_color("Backlit translucent PLA illustration", (0.026, 0.53, 0.79), emission=True)
     bpy.data.objects["Violet rim"].data.color = (0.83, 0.91, 1.0)
     add_flat_graphics(ink, accent)
+    expose_led_openings()
     add_shoulders(bpy.data.objects["PRINT_02_upper_frame"], white)
 
     pivot = bpy.data.objects.new("Tab5 removable cradle • tilt pivot", None)
