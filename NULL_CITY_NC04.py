@@ -236,23 +236,31 @@ def export_print_part(part, filename, rotation=None):
     bpy.data.meshes.remove(staging_mesh)
 
 
-def add_shoulders(frame, white):
-    # The lower polygon overlaps the frame's rear wall, outside the deck opening.
-    profile = [(86, 36), (94, 36), (94, 47), (86, 72), (79, 75),
-               (73, 73), (71, 70), (76, 64), (82, 58), (87, 53), (90, 50)]
+def add_snap_in_bearings(frame, white):
+    # The shoulder and latch share one side face so the entire part prints flat.
+    profile = [(89.35, 31.1), (90.30, 31.1), (91.25, 32.5), (91.25, 33.56),
+               (90.45, 33.56), (90.45, 47.12), (91.30, 47.12), (92.2, 48.2), (93.7, 50.5),
+               (86, 72), (79, 75), (73, 73), (71, 70), (76, 64), (82, 58),
+               (87, 53), (89.5, 50.8), (89.25, 47.1), (88.95, 46.6)]
     to_world = Matrix(((0, 0, 1, 0), (1, 0, 0, 0),
                        (0, 1, 0, 0), (0, 0, 0, 1)))
+    bearings = []
     for x in (-76, 76):
-        shoulder = prism("Integrated shoulder", profile, x - 4.5, x + 4.5, white)
-        shoulder.data.transform(to_world)
-        bevel = shoulder.modifiers.new("Molded edge radius", "BEVEL")
-        bevel.width = 1.4
-        bevel.segments = 4
-        boolean(frame, shoulder, "UNION")
-        bore(frame, 3.2, 11, (x, *PIVOT[1:]))
+        slot = box("Bearing vertical socket", (9.4, 2.1, 19),
+                   (x, 89.75, 39.5), white, bevel=0)
+        boolean(frame, slot, "DIFFERENCE")
+        release = box("Bearing rear release window", (9.8, 6.1, 3.2),
+                      (x, 92.75, 32.4), white, bevel=0)
+        boolean(frame, release, "DIFFERENCE")
+
+        bearing = prism("PRINT snap-in hinge bearing", profile, x - 4.5, x + 4.5, white)
+        bearing.data.transform(to_world)
+        bore(bearing, 3.2, 11, (x, *PIVOT[1:]))
+        bearings.append(bearing)
     feedthrough = box("GPIO harness feedthrough cutter", (18, 19, 8), (GPIO_X, 89, 32), white, bevel=2)
     boolean(frame, feedthrough, "DIFFERENCE")
-    frame.name = "NC04 upper frame • integral white cradle shoulders"
+    frame.name = "NC04 upper frame • snap-in bearing sockets"
+    return bearings
 
 
 def add_tab5(pivot, case, glass, brass):
@@ -406,7 +414,7 @@ def add_snap_hinge(cradle, pivot, finish):
     for side in (-1,1):
         bore(cradle,3.2,8,(side*65.45,0,0),pivot)
         pin=make_hinge_pin(finish)
-        pin.location=(side*82.2,*PIVOT[1:])
+        pin.location=(side*82.28,*PIVOT[1:])
         pin.rotation_euler.y=radians(-90*side)
         clip=make_hinge_clip(finish)
         # The opening faces down for installation from above after the pin is seated.
@@ -626,7 +634,7 @@ def main():
     add_debossed_graphics(panel, upper, accent)
     expose_led_openings()
     finish_deck_edges(panel, white)
-    add_shoulders(upper, white)
+    hinge_bearings = add_snap_in_bearings(upper, white)
     finish_shell_edge(upper, 24, 150, 95, 8, 0.55)
     tray = bpy.data.objects["PRINT_01_lower_tray"]
     diffusers = level_side_lighting(tray, white)
@@ -672,6 +680,8 @@ def main():
     export_print_part(guides[1], "NC04_05_tab5_snap_guide.stl", Matrix.Rotation(radians(90), 4, "Y"))
     export_print_part(hinge_pin, "NC04_07_hinge_snap_pin.stl")
     export_print_part(hinge_clip, "NC04_08_hinge_c_clip.stl")
+    export_print_part(hinge_bearings[1], "NC04_09_hinge_snap_bearing.stl",
+                      Matrix.Rotation(radians(90), 4, "Y"))
     for diffuser in diffusers:
         side = "left" if "left" in diffuser.name else "right"
         export_print_part(diffuser, f"NC04_06_light_{side}_diffuser.stl")

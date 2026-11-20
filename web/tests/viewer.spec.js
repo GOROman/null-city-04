@@ -20,7 +20,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
   await page.locator('.hardware-details summary').click();
   await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm × 4本');
   await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
-  await expect(page.locator('.hardware-details')).toContainText('造形軸ピンと C クリップ × 各2');
+  await expect(page.locator('.hardware-details')).toContainText('差し込み式軸受け・造形軸ピン・C クリップ × 各2');
   await expect(page.locator('.hardware-details')).toContainText('下向き 2 × 5 ピン');
   const gpioView=page.getByRole('button',{name:'下側の GPIO 端子を見る'});
   await gpioView.click();
@@ -64,7 +64,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     return {plates:groups.length,parts:groups.reduce((n,group)=>n+group.userData.partCount,0),
       positions:new Set(groups.map(group=>group.position.toArray().join(','))).size};
   });
-  expect(overview).toEqual({plates:6,parts:19,positions:6});
+  expect(overview).toEqual({plates:6,parts:21,positions:6});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(6);
   await expect(page.locator('.print-annotation').last()).toContainText('乳白・半透明 PLA · 約28分');
   await page.locator('#print-plate').selectOption('3');
@@ -74,9 +74,9 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
     const tablet=v.arcade.scene.getObjectByName('Tab5TiltPivot');
     return {parts:group.userData.partCount,tabletVisible:tablet.visible};
   });
-  expect(plate).toEqual({parts:7,tabletVisible:false});
+  expect(plate).toEqual({parts:9,tabletVisible:false});
   await expect(page.locator('.print-annotation:visible')).toHaveCount(1);
-  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約49分');
+  await expect(page.locator('.print-annotation')).toContainText('白PLA · 約1時間1分');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#print-plate-controls')).toBeHidden();
   await expect(page.locator('#print-annotations')).toBeHidden();

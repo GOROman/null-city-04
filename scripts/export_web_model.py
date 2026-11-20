@@ -24,6 +24,7 @@ def displacement(name):
     if name.startswith('NC04 upper frame'):return (0,0,32)
     if name=='Tab5TiltPivot':return (0,0,115)
     if name=='GpioCableEntry':return (0,0,32)
+    if name.startswith('PRINT snap-in hinge bearing'):return (0,0,70)
     if name.startswith('PRINT hinge snap pin'):
         return (35 if bpy.data.objects[name].location.x>0 else -35,0,45)
     if name.startswith('PRINT hinge C-clip'):
