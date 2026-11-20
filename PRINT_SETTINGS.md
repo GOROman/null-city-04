@@ -16,7 +16,7 @@ STLの単位はmm。各STLを個別のオブジェクトとして読み込み、
 
 | 部品 | 3MF | H3Cプレート | 0.4 mm / 積層0.20 mmの見積もり |
 |---|---|---|---|
-| シアンPLA天板 | [3MF](print/h3c/NC04-cyan-panel-04-supertack.3mf) | SuperTack | 約3時間56分、141.82 g |
+| PLA Palette Cyan（18600、`#0090DA`）天板 | [3MF](print/h3c/NC04-cyan-panel-04-supertack.3mf) | SuperTack | 約3時間56分、141.82 g |
 | 黒TPU脚4個 | [3MF](print/h3c/05_TPU_feet.3mf) | Textured PEI | 約31分、5.36 g |
 
 両プレートともサポートなし。実機と同期し、装着プレートとフィラメントを確認してから、Bambu Studioで再スライスします。

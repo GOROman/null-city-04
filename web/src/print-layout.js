@@ -6,7 +6,7 @@ export const bed = {width: 330, depth: 320};
 export const plates = [
   {name: '下ケース', seconds: 25751, parts: [['NC04_01_lower_tray', 0, 0]]},
   {name: '上フレーム', seconds: 11096, parts: [['NC04_02_upper_frame', 0, 0]]},
-  {name: '天板', seconds: 14171, material: 'シアンPLA', color: 0x00b5d8, parts: [['NC04_03_control_panel', 0, 0]]},
+  {name: '天板', seconds: 14171, material: 'シアンPLA', color: 0x0090da, parts: [['NC04_03_control_panel', 0, 0]]},
   {name: 'Tab5 クレードル・固定台', seconds: 3753, parts: [['NC04_04_tab5_cradle', 0, -44], ['NC04_12_fixed_cradle_mount', 0, 45]]},
   {name: '脚', seconds: 1884, material: '黒TPU', color: 0x151515, parts: [
     ['PRINT_TPU_foot_-113_-66', -27, -27], ['PRINT_TPU_foot_-113_66', -27, 27],

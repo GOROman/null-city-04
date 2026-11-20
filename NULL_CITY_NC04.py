@@ -539,7 +539,7 @@ def main():
     finish_shell_edge(tray, 3, 149, 94, 8, 0.85)
     add_deck_hardware(tray, upper, bpy.data.objects["PRINT_03_control_panel"], hardware, brass)
     white.name = "NC-04 white PLA"
-    cyan = material("NC-04 cyan PLA deck", (0.0, 0.462, 0.687))
+    cyan = material("NC-04 cyan PLA deck", (0.0, 0.278894, 0.701102))
     cyan.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = .36
     for index in range(len(panel.data.materials)):
         panel.data.materials[index] = cyan
