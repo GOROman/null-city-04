@@ -355,25 +355,21 @@ def add_snap_guides(cradle, pivot, white):
     yz_to_xyz = Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     for side in (-1, 1):
         guide = box("Tab5 snap-in guide", (3.2, 17.6, 12.4),
-                    (side * 66.3, 0, 12.5), white, pivot, bevel=0.35)
-        bridge = box("Guide locating foot", (6.7, 5.8, 1.7),
-                     (side * 64.25, 0, 5.65), white, pivot, bevel=0.2)
-        boolean(guide, bridge, "UNION")
+                    (side * 66.3, 0, 12.7), white, pivot, bevel=0.35)
 
-        # The tongue is inboard of the M3 screw tip and flexes toward the front.
-        profile = [(-1.5, 6), (0, 6), (0, -3.8), (0.95, -5.25),
+        # The tongue and rail share their outside print face. Offset the tongue
+        # toward the front so the cutout clears the M3 tilt screw.
+        profile = [(-1.5, 6.95), (0, 6.95), (0, -3.8), (0.95, -5.25),
                    (0.35, -6.7), (-1.5, -6.7)]
-        ends = sorted((side * 60.9, side * 63.1))
+        profile = [(y - 4.4, z) for y, z in profile]
+        ends = sorted((side * 64.9, side * 67.9))
         tongue = prism("Guide snap tongue", profile, *ends, white)
         tongue.data.transform(yz_to_xyz)
         tongue.parent = pivot
         boolean(guide, tongue, "UNION")
 
-        seat = box("Guide locating recess cutter", (7.2, 6.3, 2.2),
-                   (side * 64.25, 0, 5.7), white, pivot, bevel=0.05)
-        boolean(cradle, seat, "DIFFERENCE")
-        slot = box("Snap tongue slot cutter", (2.7, 2.8, 15),
-                   (side * 62, -0.95, 0.0), white, pivot, bevel=0.1)
+        slot = box("Snap tongue slot cutter", (3.4, 2.8, 15),
+                   (side * 66.4, -5.35, 0.0), white, pivot, bevel=0.1)
         boolean(cradle, slot, "DIFFERENCE")
         guides.append(guide)
     return guides
