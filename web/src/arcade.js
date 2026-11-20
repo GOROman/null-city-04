@@ -25,7 +25,7 @@ function hueRGB(h){
 export class Arcade {
   constructor(viewer,composer,pass,onInput){
     this.viewer=viewer;this.composer=composer;this.pass=pass;this.scene=pass.scene;this.onInput=onInput;
-    this.active=false;this.power=true;this.mode='rainbow';this.speed=1;this.hex='#ff149e';this.clock=0;this.pulse=0;
+    this.active=false;this.power=true;this.mode='rainbow';this.speed=1;this.hex='#00a6cf';this.clock=0;this.pulse=0;
     this.buttons=[];this.pointers=new Map();this.keys=new Set();this.padDirections=new Map();this.drag=null;
     this.stickX=new Spring(190,21);this.stickY=new Spring(190,21);this.ray=new Raycaster();this.ndc=new Vector2();
     this.abort=new AbortController();this.last=performance.now();this.lastPaint=0;

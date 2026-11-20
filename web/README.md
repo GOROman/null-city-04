@@ -1,8 +1,8 @@
 # NULL CITY — PBR Web preview
 
-公開先：**https://goroman.github.io/null-city/**
+公開先：**https://goroman.github.io/null-city-04/**
 
-現在のBlender組立モデルをGLBへ出力し、`@google/model-viewer` 4.4.0で表示する静的Web UI。回転・ズーム・移動、俯瞰／正面／右側面／上面、分解スライダー、ケース透過、LED点灯、HDR IBL、環境回転・HDR背景、SSAO、任意の自動回転に対応。デカール、金属・粗さ、透過、クリアコート、発光をGLBに保持する。GLBはメートル単位、外幅0.300 m。照明・材質は完成イメージで、実物の配線・光学・温度検証ではない。
+現在のBlender組立モデルをGLBへ出力し、`@google/model-viewer` 4.4.0で表示する静的Web UI。回転・ズーム・移動、俯瞰／正面／右側面／背面／上面、分解スライダー、Tab5 チルト（15〜45°）、M3 × 40 mm ねじと M3 インサートの寸法・PLA 指定の表示、ケース透過、LED点灯、HDR IBL、環境回転・HDR背景、SSAO、任意の自動回転に対応。デカール、金属・粗さ、透過、クリアコート、発光をGLBに保持する。GLBはメートル単位、外幅0.300 m。照明・材質は完成イメージで、実物の配線・光学・温度検証ではない。
 
 ## ローカルで確認
 
@@ -17,7 +17,7 @@ npm run dev --prefix web
 
 ## モデル更新
 
-形状・材質を変更したら、先に `NULL_CITY_NC03.py` で最新の `.blend` を生成する。その後：
+形状・材質を変更したら、先に `NULL_CITY_NC04.py` で最新の `.blend` を生成する。その後：
 
 ```sh
 npm run model:export --prefix web
@@ -26,7 +26,7 @@ npm run build --prefix web
 
 Blender実行ファイルが標準の場所にない場合は `BLENDER=/path/to/blender npm run model:export --prefix web`。
 
-`public/model/nc03.glb` と `manifest.json` をコミットする。生成スクリプトは元のblendを保存せず、20個の印刷部品と外観部品だけを出力し、床・カメラ・照明器具を含めない。Blenderのmm座標はGLBのルートでメートルへ変換し、各部品の動きを1本の `Assembly` アニメーションにまとめる。乳白カバーは非発光時のベース色を白とし、マゼンタは発光チャンネルに持たせる。
+`public/model/nc04.glb` と `manifest.json` をコミットする。生成スクリプトは元のblendを保存せず、造形部品と外観部品を出力し、床・カメラ・照明器具を含めない。Blenderのmm座標はGLBのルートでメートルへ変換し、各部品の動きを1本の `Assembly` アニメーションにまとめる。乳白カバーは非発光時のベース色を白とし、RGB は発光チャンネルに持たせる。
 
 ビルド時には元モデル・設計入力・GLBのSHA-256を照合する。古いGLBが残っていたらCIを失敗させ、古いプレビューの公開を防ぐ。Actions上でBlenderを再実行せず、検証済みのエクスポートを配信する。
 
@@ -39,7 +39,7 @@ npx playwright install chromium
 npm test
 ```
 
-macOSでインストール済みChromeを使う場合は `PW_USE_CHROME=1 npm test`。Playwrightは本番ビルドを `/null-city/` 配下で開き、PC・スマートフォンでGLB読み込み、寸法・材質、視点、分解、発光、透過、露出（EVと実際の描画輝度）、回転、リセット、横はみ出し、読み込み失敗時の表示を確認する。GLBはKhronos glTF Validatorでも検証する。
+macOSでインストール済みChromeを使う場合は `PW_USE_CHROME=1 npm test`。Playwrightは本番ビルドを `/null-city-04/` 配下で開き、PC・スマートフォンでGLB読み込み、寸法・材質、視点、分解、発光、透過、露出（EVと実際の描画輝度）、回転、リセット、横はみ出し、読み込み失敗時の表示を確認する。GLBはKhronos glTF Validatorでも検証する。
 
 `.github/workflows/pages.yml` がmainへの関連変更と手動実行で、依存インストール→GLB整合性・ビルド→ブラウザー検証→Pages公開を行う。PRでは同じ検証を行い、公開しない。PagesのSourceは **GitHub Actions**。公開ジョブだけに `pages: write` と `id-token: write` を付与する。
 
@@ -61,7 +61,7 @@ CIのGPUはSwiftShaderによるソフトウェア描画のため、PC・モバ�
 
 環境光の強さは0〜2倍で、IBLとHDR背景にのみ作用し、LEDの自己発光へは掛けない。露出は−3〜＋3 EV（0.1 EV刻み）。0 EVが既定の明るさで、描画倍率は `0.8 × 2^EV`。＋1 EVで2倍、−1 EVで半分になり、リセットで0 EVへ戻る。カメラの露出として、反射光・自己発光の両方へ同じように作用する。
 
-LEDはPBRのEmissiveで自己発光する。乳白カバー／マゼンタ光源は強度5、表示LEDは4、前面文字は3。HDR環境の照明強度をゼロにしても発光が残る。実際の照度を校正した値ではなく完成イメージ用の相対強度。
+LEDはPBRのEmissiveで自己発光する。乳白カバー／側面・前面の光源は強度5、表示LEDは4。HDR環境の照明強度をゼロにしても発光が残る。実際の照度を校正した値ではなく完成イメージ用の相対強度。
 
 Selective BloomはEmissive材質を持つメッシュだけを対象にし、白いケースやボタンのHDR反射へは適用しない。LEDのOFFでEmissiveをゼロにし、Bloomも停止する。露出スライダーとは独立した発光ON／OFFとなる。
 

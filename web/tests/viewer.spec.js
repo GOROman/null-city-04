@@ -14,15 +14,24 @@ async function load(page,{freezeRGB=true}={}){
 test('PBR model, meter scale, artwork, camera and assembly controls',async({page},testInfo)=>{
   const errors=await load(page);
   const model=await page.locator('#viewer').evaluate(v=>({size:v.getDimensions(),animations:v.availableAnimations,materials:v.model.materials.map(m=>m.name)}));
-  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.19,3);
+  expect(model.size.x).toBeCloseTo(.3,3);expect(model.size.z).toBeCloseTo(.2234,3);
   expect(model.animations).toEqual(['Assembly']);
-  expect(model.materials).toContain('Co-printed logo white');
+  expect(model.materials).toContain('Tab5 rear • M5Stack reference photograph');
+  await page.locator('.hardware-details summary').click();
+  await expect(page.locator('.hardware-details')).toContainText('M3 × 40 mm');
+  await expect(page.locator('.hardware-details')).toContainText('M3 熱圧入インサート');
+  const readTilt=()=>page.locator('#viewer').evaluate(v=>v.arcade.scene.getObjectByName('Tab5TiltPivot').rotation.x);
+  await expect.poll(readTilt).toBeCloseTo(-Math.PI/6,3);
+  await page.locator('#tab5-tilt').evaluate(e=>{e.value='45';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  await expect(page.locator('#tab5-tilt-value')).toHaveText('45°');
+  await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
   await page.getByRole('button',{name:'右側面',exact:true}).click();
   await expect(page.getByRole('button',{name:'右側面',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.locator('#assembly').evaluate(e=>{e.value='100';e.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.locator('#assembly-value')).toHaveText('100%');
   const pose=await page.locator('#viewer').evaluate(v=>({time:v.currentTime,duration:v.duration}));
   expect(pose.time).toBeGreaterThan(.9*pose.duration);
+  await expect.poll(readTilt).toBeCloseTo(-Math.PI/4,3);
   await page.locator('#led').uncheck({force:true});
   expect(await page.locator('#viewer').evaluate(v=>v.model.materials.every(m=>m.emissiveFactor.every(x=>x===0)))).toBe(true);
   await page.locator('#transparent').check({force:true});
@@ -78,7 +87,7 @@ test('PBR model, meter scale, artwork, camera and assembly controls',async({page
 });
 
 test('failed model request shows an actionable error instead of an endless loader',async({page})=>{
-  await page.route('**/model/nc03.glb',route=>route.abort());
+  await page.route('**/model/nc04.glb',route=>route.abort());
   await page.goto('./');
   await expect(page.locator('#error-panel')).toBeVisible({timeout:30000});
   await expect(page.getByRole('button',{name:'再読み込み',exact:true})).toBeVisible();

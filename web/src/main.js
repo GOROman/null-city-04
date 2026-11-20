@@ -9,6 +9,7 @@ const controls=document.querySelector('#model-controls');
 const stage=document.querySelector('.stage');
 const status=document.querySelector('#load-status');
 const assembly=document.querySelector('#assembly');
+const tilt=document.querySelector('#tab5-tilt');
 const exposure=document.querySelector('#exposure');
 const environmentStrength=document.querySelector('#environment-strength');
 const led=document.querySelector('#led');
@@ -32,7 +33,7 @@ const ssaoStrength=document.querySelector('#ssao-strength');const ssaoRadius=doc
 let arcade=null;
 const environmentSources={studio03:'./environments/studio_small_03_1k.hdr',studio02:'./environments/studio_small_02_1k.hdr',neutral:'neutral'};
 const viewButtons=[...document.querySelectorAll('[data-view]')];
-const viewAngles={hero:[25,65],front:[0,90],right:[90,90],top:[0,.1]};
+const viewAngles={hero:[25,65],front:[0,90],right:[90,90],rear:[155,65],top:[0,.1]};
 let ready=false,restTarget,restRadius,emissive=[],caseMaterials=[];
 let view='hero';
 
@@ -55,6 +56,16 @@ function setAssembly(){
   if(fraction>0&&arcade?.active){playMode.checked=false;setPlayMode();}
   viewer.pause();viewer.currentTime=Math.min(viewer.duration-.0001,Math.max(0,viewer.duration*fraction));
   frameCurrentView();
+}
+function setTilt(){
+  const degrees=Number(tilt.value);
+  document.querySelector('#tab5-tilt-value').value=`${degrees}°`;
+  const pivot=environmentPass.scene?.getObjectByName('Tab5TiltPivot');
+  if(!pivot)return;
+  pivot.rotation.x=-degrees*Math.PI/180;
+  pivot.updateMatrixWorld(true);
+  environmentPass.scene.queueShadowRender?.();
+  composer.queueRender();
 }
 function setLights(){
   for(const {material,factor} of emissive)material.setEmissiveFactor(led.checked?factor:[0,0,0]);
@@ -161,11 +172,11 @@ viewer.addEventListener('environment-change',()=>{
 });
 function reset(){
   playMode.checked=false;setPlayMode();
-  rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#ff149e';rgbSpeed.value='1';
+  rgbMode.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'solid':'rainbow';rgbColor.value='#00a6cf';rgbSpeed.value='1';
   backgroundColor.value='#e9e9e7';grid.checked=true;ssaoStrength.value='1.2';ssaoRadius.value='5';
-  assembly.value='0';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
+  assembly.value='0';tilt.value='30';exposure.value='0';environmentStrength.value='1';led.checked=true;transparent.checked=false;rotate.checked=false;
   environment.value='studio03';environmentAngle.value='90';background.checked=false;ssaoEnabled.checked=true;
-  setAssembly();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
+  setAssembly();setTilt();setEnvironmentStrength();setExposure();setLights();setTransparency();setRotation();setView('hero');
   viewer.resetTurntableRotation(0);setEnvironment();setSSAO();setRGB();setBackgroundColor(false);
 }
 
@@ -187,6 +198,7 @@ viewer.addEventListener('error',()=>{
   ready=false;controls.disabled=true;status.textContent='読み込みエラー';document.querySelector('#error-panel').hidden=false;
 });
 assembly.addEventListener('input',setAssembly);
+tilt.addEventListener('input',setTilt);
 exposure.addEventListener('input',setExposure);
 environmentStrength.addEventListener('input',setEnvironmentStrength);
 led.addEventListener('change',setLights);

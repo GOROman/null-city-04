@@ -233,11 +233,13 @@ def main():
         )
         for rail in rails:
             boolean(cradle, rail, "UNION")
+        # The M3 × 40 screw threads through the end insert and enters this blind relief.
+        bore(cradle, 1.7, 33, (side * 53.5, 0, 0), pivot)
         bore(cradle, 2.0, 6, (side * 66.5, 0, 0), pivot)
         insert = cylinder("M3 brass insert • reference", 2.25, 4.5, (side * 66.5, 0, 0), pivot)
         bore(insert, 1.25, 6, (side * 66.5, 0, 0), pivot)
         insert.data.materials.append(brass)
-        screw = cylinder("M3 pivot screw shank", 1.5, 14, (side * 71.5, *PIVOT[1:]))
+        screw = cylinder("M3 pivot screw shank", 1.5, 40, (side * 58.5, *PIVOT[1:]))
         screw.data.materials.append(hardware)
         head = cylinder("M3 pivot screw head", 2.75, 2.5, (side * 79.75, *PIVOT[1:]))
         head.data.materials.append(hardware)

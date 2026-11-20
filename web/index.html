@@ -4,22 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17171c">
-  <meta name="description" content="NULL CITY NC-03 — オープンソースのアーケードスティックを、PBRの3Dモデルで回して、押して、光らせる。">
-  <title>NULL CITY / NC-03 — 3D Preview</title>
+  <meta name="description" content="NULL CITY NC-04 — オープンソースのアーケードスティックを、PBRの3Dモデルで回して、押して、光らせる。">
+  <title>NULL CITY / NC-04 — 3D Preview</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
 <body>
   <a class="skip-link" href="#viewer">3Dモデルへ移動</a>
   <header class="masthead">
-    <a class="wordmark" href="./" aria-label="NULL CITY ホーム">NULL CITY <span>///</span></a>
+    <a class="wordmark" href="./" aria-label="NULL CITY ホーム">NULL CITY <span>IV</span></a>
     <span class="masthead-caption">OPEN HARDWARE · ARCADE STICK</span>
-    <a class="repo-link" href="https://github.com/GOROman/null-city" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    <a class="repo-link" href="https://github.com/GOROman/null-city-04" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
   </header>
   <main class="workspace">
     <aside class="inspector" aria-label="モデルの説明と表示設定">
       <div class="intro">
         <p class="eyebrow"><span class="live-dot"></span> INTERACTIVE MODEL</p>
-        <h1>NC-03<span>ARCADE STICK</span></h1>
+        <h1>NC-04<span>ARCADE STICK</span></h1>
         <p class="description">回して、押して、光らせる。<br>NULL CITYの形と構造を、ブラウザーで。</p>
         <div class="specs"><div><strong>300<span> × </span>190</strong><small>外形 / mm</small></div><div><strong>6 <span>+</span> 2</strong><small>操作ボタン</small></div></div>
       </div>
@@ -45,6 +45,20 @@
           <div class="range-heading"><label for="assembly">分解して構造を見る</label><output id="assembly-value" for="assembly">0%</output></div>
           <input id="assembly" name="assembly" type="range" min="0" max="100" value="0" aria-describedby="assembly-help">
           <div class="range-labels" id="assembly-help"><span>組立</span><span>分解</span></div>
+          <div class="range-heading"><label for="tab5-tilt">Tab5 のチルト</label><output id="tab5-tilt-value" for="tab5-tilt">30°</output></div>
+          <input id="tab5-tilt" type="range" min="15" max="45" step="1" value="30" aria-describedby="tab5-tilt-help">
+          <div class="range-labels" id="tab5-tilt-help"><span>15° · 垂直寄り</span><span>45° · 後方</span></div>
+          <details class="hardware-details">
+            <summary>Tab5 の固定ねじ・寸法</summary>
+            <dl>
+              <dt>軸ねじ</dt><dd>M3 × 40 mm（全ねじ）× 2本</dd>
+              <dt>受け側</dt><dd>M3 熱圧入インサート × 2個</dd>
+              <dt>通し穴 / 下穴</dt><dd>Ø3.4 mm / Ø4.0 mm（暫定）</dd>
+              <dt>差し込みクリアランス</dt><dd>左右各0.7 mm・前後各0.8 mm</dd>
+              <dt>造形材</dt><dd>PLA（ライトカバーは乳白・半透明 PLA）</dd>
+            </dl>
+            <p>分解表示で軸ねじとインサートの位置を確認できます。造形は市販ボタン使用時に6プレートを予定しています。</p>
+          </details>
           <label class="toggle-row"><span>ケースを透かす</span><input id="transparent" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row rotate-toggle"><span>自動で回転</span><input id="rotate" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
           <div class="section-title"><span>02</span> HDR / IBL</div>
@@ -67,7 +81,7 @@
           <div class="section-title extra-section"><span>03</span> RGB LIGHTING</div>
           <label class="environment-label" for="rgb-mode">RGBエフェクト</label>
           <select id="rgb-mode"><option value="rainbow">流れるレインボー</option><option value="pulse">ブリージング</option><option value="reactive">操作に反応</option><option value="solid">単色 / アニメーション停止</option></select>
-          <label class="color-row" for="rgb-color"><span>カラー</span><input id="rgb-color" type="color" value="#ff149e"></label>
+          <label class="color-row" for="rgb-color"><span>カラー</span><input id="rgb-color" type="color" value="#00a6cf"></label>
           <div class="range-heading"><label for="rgb-speed">RGBの速度</label><output id="rgb-speed-value" for="rgb-speed">1.0×</output></div>
           <input id="rgb-speed" type="range" min="0.2" max="2" step="0.1" value="1">
           <label class="toggle-row"><span>LEDを点灯</span><input id="led" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
@@ -87,15 +101,15 @@
         </fieldset>
       </form>
       <div class="inspector-bottom">
-        <p class="notice"><span class="notice-mark">i</span>発光・材質は完成イメージです。<br>配線込みの仮組み・光学・温度は確認待ち。</p>
-        <a class="source-link" href="https://github.com/GOROman/null-city#readme" target="_blank" rel="noopener noreferrer">設計データ・印刷設定 <span aria-hidden="true">↗</span></a>
+        <p class="notice"><span class="notice-mark">i</span>操作と発光はブラウザー内のシミュレーションです。</p>
+        <a class="source-link" href="https://github.com/GOROman/null-city-04#readme" target="_blank" rel="noopener noreferrer">設計データ・印刷設定 <span aria-hidden="true">↗</span></a>
       </div>
     </aside>
-    <section class="stage" aria-label="NC-03の3Dプレビュー">
+    <section class="stage" aria-label="NC-04の3Dプレビュー">
       <button type="button" id="play-view" class="play-view" aria-pressed="false">操作する</button>
       <div class="stage-topline"><span><i aria-hidden="true"></i> PBR / HDR IBL</span><span id="load-status" role="status" aria-live="polite">モデルを読み込み中…</span></div>
-      <model-viewer id="viewer" src="./model/nc03.glb" poster="./project/poster.jpg"
-        alt="NULL CITY NC-03。白い面取りケース、紺の天板、紫のレバー、緑と透明の6ボタン、前面と側面のフルカラーRGB照明を備えたアーケードスティック。"
+      <model-viewer id="viewer" src="./model/nc04.glb" poster="./project/poster.jpg"
+        alt="NULL CITY NC-04。白い筐体、6ボタン、M5Stack Tab5用チルトクレードルを備えたアーケードスティック。"
         camera-controls camera-orbit="25deg 65deg 105%" field-of-view="29deg"
         min-camera-orbit="auto 0.1deg 60%" max-camera-orbit="auto 170deg 250%"
         environment-image="./environments/studio_small_03_1k.hdr" tone-mapping="neutral" exposure="0.8"
@@ -115,17 +129,18 @@
           <button type="button" data-view="hero" aria-pressed="true">俯瞰</button>
           <button type="button" data-view="front" aria-pressed="false">正面</button>
           <button type="button" data-view="right" aria-pressed="false">右側面</button>
+          <button type="button" data-view="rear" aria-pressed="false">背面</button>
           <button type="button" data-view="top" aria-pressed="false">上面</button>
           <button type="button" id="rotate-view" aria-pressed="false" aria-label="自動回転を切り替える" title="自動回転">↻</button>
           <button type="button" id="reset" aria-label="視点と表示設定をリセット" title="リセット">↺</button>
         </div>
         <p class="interaction-hint" id="interaction-hint"><span>ドラッグで回転</span><span>スクロールでズーム</span><span>右ドラッグで移動</span></p>
       </div>
-      <div class="stage-caption"><span>NC-03 / <strong>6-BUTTON LAYOUT</strong></span><a href="./model/nc03.glb" download="NULL-CITY-NC03.glb">GLBをダウンロード <span aria-hidden="true">↓</span></a></div>
+      <div class="stage-caption"><span>NC-04 / <strong>6-BUTTON LAYOUT</strong></span><a href="./model/nc04.glb" download="NULL-CITY-NC04.glb">GLBをダウンロード <span aria-hidden="true">↓</span></a></div>
     </section>
   </main>
-  <footer class="footer"><span>DESIGNED BY <a href="https://github.com/GOROman">GOROman</a></span><span>MODEL <a href="./project/CC-BY-4.0.txt">CC BY 4.0</a> <b>/</b> FONT <a href="./project/OFL.txt">SIL OFL 1.1</a> <b>/</b> <a href="./project/THIRD_PARTY_LICENSES.txt">THIRD PARTY</a></span><span id="revision">NULL CITY · OPEN SOURCE</span></footer>
-  <noscript><p class="noscript">3D表示にはJavaScriptが必要です。<a href="./project/poster.jpg">完成予想図を見る</a> ／ <a href="./model/nc03.glb">モデルをダウンロード</a></p></noscript>
+  <footer class="footer"><span>DESIGNED BY <a href="https://github.com/GOROman">GOROman</a></span><span>MODEL <a href="./project/CC-BY-4.0.txt">CC BY 4.0</a> <b>/</b> FONT <a href="./project/OFL.txt">SIL OFL 1.1</a> <b>/</b> <a href="./project/THIRD_PARTY_LICENSES.txt">THIRD PARTY</a> <b>/</b> <a href="https://github.com/GOROman/null-city-04/tree/main/docs/references/tab5">Tab5 CAD / 写真</a></span><span id="revision">NULL CITY · OPEN SOURCE</span></footer>
+  <noscript><p class="noscript">3D表示にはJavaScriptが必要です。<a href="./project/poster.jpg">完成予想図を見る</a> ／ <a href="./model/nc04.glb">モデルをダウンロード</a></p></noscript>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
