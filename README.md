@@ -1,180 +1,85 @@
 # NULL CITY IV / NC-04
 
-![白い上フレームと別体の軸受け、Tab5、シアンの天板](preview-nc04.jpg)
+NC-04は、M5Stack Tab5を差し込んで使うアーケードスティックです。NC-03の300 × 190 mm筐体と6ボタン天板をベースに、Tab5のチルト機構と、VF2向けのUSB・BLEジョイスティックを追加しました。
 
-**[NC-04 の3D動作ビューアー](https://goroman.github.io/null-city-04/)** · [操作・開発手順](web/README.md)
+![白い筐体の奥にTab5を取り付けたNC-04の完成イメージ](preview-nc04.jpg)
 
-NC-03 の 300 × 190 mm 筐体と 6 ボタン配列をベースに、天板奥へ M5Stack Tab5 を横向きで差し込めるようにしました。左右の軸受けは白い上フレームに差し込む別体部品です。[Blender モデル](NULL_CITY_NC04.blend) · [背面レンダー](preview-nc04-rear.jpg)
+[3Dで見る](https://goroman.github.io/null-city-04/) · [Tab5に書き込む](firmware/README.md#ビルド書き込み) · [3Dプリント設定](PRINT_SETTINGS.md) · [背面レンダー](preview-nc04-rear.jpg)
 
-### Tab5 の取り付け
+## Tab5で遊ぶ
 
-- 上から左右のガイドに差し込み、下端を受け棚で支えます。左右のガイドは別体のスナップ式で、クレードルに上から差し込みます。同じ部品を2個造形します。メーカーの組み立て済み STL を使って、本体の幅 128 mm、厚さ 12 mm に対して左右各 0.7 mm、前後各 0.8 mm のすき間を設定しました。背面写真を CAD に UV 投影し、前面ガラスは薄いレンダリング用部品で補っています。[Tab5 参照データ](docs/references/tab5/)
-- 上フレームの接合部には左右の受け穴と背面の解除窓を設けています。別体の軸受けを上から差し込み、スナップ爪で固定します。外すときは背面の窓から爪を押して引き抜きます。クレードルを軸受け間に置き、左右から Ø6.0 mm の軸ピンを Ø6.4 mm の軸穴へ差し込み、C クリップで抜け止めします。軸受け・軸ピン・クリップは各2個造形します。[参考にした Stackchan Strider の組立構造](https://github.com/GOROman/stackchan-strider#組み立て)
-- Tab5 を上から差し込み、下端を受け棚に載せます。背面の固定耳2か所から、平ワッシャーを介して Tab5 純正の下側 M3 インサートに固定します。固定穴は φ3.5 mm 相当で上側に45°の屋根を設け、背面には平らなワッシャー座を設けています。ステンレス M3 × 8 mm と外径7 mm・厚さ0.5 mm の平ワッシャーを各2個使用する想定です。モデル上のねじ込みは約2.8 mmで、実機の有効深さと底付きを組み付け前に確認してください。
-- 天板四隅の固定は **M3 × 40 mm ねじ4本**。下ケースの M3 熱圧入インサートに締結し、NC-04 下ケースにはねじ先用の深い逃げを設けています。ねじとワッシャーはステンレス色、インサートナットは金色で表示しています。
-- Blender のフレーム 1〜3 は、垂直から後方へ 15°・30°・45° の姿勢です。CAD 上ではこの 3 姿勢で Tab5・クレードルと筐体・操作部の干渉がなく、差し込み経路も確認しました。45° では Tab5 が筐体後端より約 50 mm 張り出します。
-- バッテリー装着時の厚み、端子へ挿したプラグの逃げ、角度保持トルクと差し込み具合は実機合わせが必要です。
+Tab5にファームウェアを書き込み、MacやPCにUSB-Cでつなぐか、Bluetooth設定で **NULL CITY NC-04** をペアリングします。ゲーム側で、使う方のコントローラーを割り当てます。macOSではUSBとBLEの両方でジョイスティックとして認識することを確認済みです。 [書き込みと接続の手順](firmware/README.md)
 
-### 天板とデカール
+- **操作** — レバーは8方向。G・P・K・COIN・1Pは物理スイッチとタッチに対応し、2Pはタッチ専用です。
+- **INPUT LOG** — 新しい入力が右のログ欄の下に入ります。方向は太い矢印、ボタンは丸で表示します。押下中は塗りつぶし、解放は輪郭だけ。レバーが中央へ戻るだけの動きは省きます。画面には7件、RAMには最大64件を保持します。
+- **RECORD / PLAY** — レバーとG・P・Kの操作を1件記録して再生できます。COIN・1P・2Pは手動入力です。
+- **USB Joy Check** — Chromeで軸とボタンの反応を確認できます。**Enter download mode** で、対応ファームウェアのTab5を書き込みモードへ切り替えられます。 [ローカル起動手順](firmware/README.md#macosでのusb入力チェック)
 
-白い天板にシアンの細線を配置し、天板・前面・左右の「NULL CITY IV」を 0.45 mm の凹彫りにしました。周囲はフラットです。レバーのボールは半透明の青で表示しています。 LED 用には NC-03 と同じ **4 × 4 mm の角穴を 16 個**貫通させ、裏面に LED モジュールの受け座を残しています。
+![Tab5実機の操作画面。左にスティックとボタン、右に縦型入力ログ](docs/tab5-input-log.png)
 
-### 入力の構成
+*Tab5実機のスクリーンショット。入力例を表示しています。*
 
-CADでは Tab5 下辺の **Ext.Port1（2 × 5 ピン・2.54 mm ピッチ）**に下から直接差し込み、**10 芯のフラットケーブル**を筐体内へ引き込みます。公式 C145 STL の開口に嵌合中心を合わせ、クレードルに 18 × 9 mm の逃げを設けています。ケーブルはモデル上で幅 12.7 mm・厚さ 0.9 mm とし、背面で幅方向にねじらずに曲げて余長を取り、上フレーム後壁の角丸 18 × 8 mm の配線口を通します。15〜45° のチルト範囲で、ケーブル表面と筐体のすき間は CAD 上で最小約 2.6 mm です。実物のコネクター形状、ピン1の向き、最小曲げ半径は現物合わせです。[M5Stack Ext.Port1 の公式資料](https://docs.m5stack.com/en/tab5/Tab5_Keyboard)
+### 物理スイッチを配線する
 
-ブラウザーの操作モードでは、Tab5 画面の「INTELLIGENT STICK」にレバー・ボタン入力、U ボタンの連射設定、マクロの実行状態が連動します。U→I→O と J→K→L のマクロを試せます。
+接続先は **Tab5背面の30ピンM5-Bus** です。各スイッチの **NO** を表の入力ピンへ、**COM** を共通GNDへつなぎます。入力は内部プルアップで、押すとLOWになります。コネクターのピン1と向きは実機と公式ピン表で照合してください。 [M5Stack公式ピン表](https://docs.m5stack.com/en/core/Tab5#pinmap)
 
-### Tab5の操作画面と入力ログ
-
-左側でレバーとボタンをタッチ操作でき、右側の **INPUT LOG** に入力履歴が下から追加されます。矢印はレバーの方向を示し、丸ボタンは押下中に塗りつぶし、解放時に輪郭だけを表示します。
-
-![Tab5のVF2操作画面。左にバーチャルスティックと丸ボタン、右に縦型INPUT LOG](docs/tab5-input-log.png)
-
-*Tab5の実機画面。スクリーンショット用の入力例を表示しています。*
-
-### Tab5 背面M5-BusのGPIOピンアサイン
-
-VF2向けファームウェアは **背面30ピンのM5-Bus** に物理スイッチを直結し、USBとBLEのHIDを出力します。CADにある下辺の2×5 Ext.Port1用配線とはピン番号が異なります。
-
-| 入力 | M5-Busのピン番号 | ESP32-P4 GPIO | HID |
+| 入力 | M5-Busピン | ESP32-P4 GPIO | HID |
 |---|---:|---:|---|
-| レバー 上 | 2 | 16 | Y− |
-| レバー 下 | 7 | 18 | Y＋ |
-| レバー 左 | 9 | 19 | X− |
-| レバー 右 | 11 | 5 | X＋ |
+| 上 | 2 | 16 | Y− |
+| 下 | 7 | 18 | Y＋ |
+| 左 | 9 | 19 | X− |
+| 右 | 11 | 5 | X＋ |
 | G / GUARD | 19 | 3 | ボタン1 |
 | P / PUNCH | 20 | 4 | ボタン2 |
 | K / KICK | 21 | 2 | ボタン3 |
 | COIN | 15 | 7 | ボタン4 |
 | 1P / START | 16 | 6 | ボタン5 |
-| スイッチ共通GND | 1、3、5のいずれか | — | — |
 | 2P | — | — | ボタン6・タッチ専用 |
+| 共通GND | 1、3、5のいずれか | — | — |
 
-各スイッチの **NO** を表の入力ピン、**COM** を共通GNDへ接続します。入力は内部プルアップで、押下時にLOWになります。コネクターのピン1は実機と公式ピン表を照合してください。 [M5Stack公式ピン表](https://docs.m5stack.com/en/core/Tab5#pinmap) · [ファームウェアと書き込み手順](firmware/README.md)
+クレードルのCADには、下辺の **2×5 Ext.Port1** 用の開口とフラットケーブル経路があります。VF2用のハーネスは上のM5-Bus表に合わせて製作し、Tab5を傾けたときのコネクターとケーブルの逃げを確認します。 [配線の詳細](firmware/README.md) · [Ext.Port1の資料](https://docs.m5stack.com/en/tab5/Tab5_Keyboard)
 
-### 造形と NC-03 の流用
+## 筐体を作る
 
-手持ちのレバー・ボタンに加え、NC-03 の脚と前面ライトカバーを流用できます。下ケースと左右のライトカバーは従来の斜めのライト帯のまま使う場合に流用できます。**左右のライト帯を水平にそろえる場合は、NC-04 の下ケースと左右カバーが必要です。**下ケースと上フレームの接合面と 4 か所の M3 固定位置は CAD で照合しました。下ケースがライトカバー対応版か、手元の部品で確認してください。NC-03 の下ケースはインサート下の穴が浅いため、M3 × 40 mm を使うにはねじ先の逃げを現物で確認し、必要に応じて追加工します。NC-03 の天板を仮組みに流用するなら、新規造形は **上フレームとクレードルの2プレート**です。凹彫りロゴと LED 穴の面取りも反映する場合は、NC-04 天板を加えて3プレートです。
+H3Cで一式を新造する場合は、下ケース、上フレーム、天板、クレードル一式、脚、ライトカバーの6プレート構成です。本体はPLA、ライトカバーは乳白・半透明PLAを想定しています。 [造形配置を3Dで見る](https://goroman.github.io/null-city-04/) · [造形設定と見積もり](PRINT_SETTINGS.md)
 
-| NC-04 の造形データ | 内容 |
+| 部品 | データと仕様 |
 |---|---|
-| [下ケース](STL/NC04_01_lower_tray.stl) | 広い床面を 5.0 → 2.2 mm。脚と四隅のボス周辺は厚みを確保。背面は連続した壁 |
-| [上フレーム](STL/NC04_02_upper_frame.stl) | チルト軸受けの受け穴・解除窓と GPIO 配線口。前面と左右の壁を約5〜7 mmに薄肉化 |
-| [天板](STL/NC04_03_control_panel.stl) | 外周上端 C0.9。LED の角穴16個は 4 mm 貫通、入口 C0.4 で 4.8 mm |
-| [Tab5 クレードル](STL/NC04_04_tab5_cradle.stl) | Tab5 背面の M3 固定耳、造形軸ピンの穴、下向き GPIO 端子の逃げ |
-| [Tab5 スナップガイド](STL/NC04_05_tab5_snap_guide.stl) | 左右共通 × 2。ガイドの外側と爪を同じ造形面に接地。白 PLA、0.20 mm、サポートなし |
-| チルト用の [軸ピン](STL/NC04_07_hinge_snap_pin.stl) / [C クリップ](STL/NC04_08_hinge_c_clip.stl) | 白 PLA、左右各1個。クレードルと同じプレートに配置 |
-| [差し込み式軸受け](STL/NC04_09_hinge_snap_bearing.stl) | 左右共通 × 2。側面をプレートに接地し、サポートなしで造形 |
-| 側面ライトカバー [左](STL/NC04_06_light_left_diffuser.stl) / [右](STL/NC04_06_light_right_diffuser.stl) | 左右同じ高さで底面に平行。乳白・半透明 PLA |
+| 下ケース | [STL](STL/NC04_01_lower_tray.stl) · 床厚2.2 mm、水平な左右の照明帯 |
+| 上フレーム | [STL](STL/NC04_02_upper_frame.stl) · [H3C用3MF](print/h3c/NC04-upper-frame-supertack.3mf) · SuperTack、0.8 mm高流量、積層0.32 mm、準備込み約1時間4分 |
+| 天板 | [STL](STL/NC04_03_control_panel.stl) · 288 × 178 × 4 mm、6ボタン配列、4 × 4 mmのLED角穴16個、凹彫りロゴ |
+| クレードル一式 | [H3C用3MF](print/h3c/NC04-cradle-04-supertack.3mf) · 9点、SuperTack、0.4 mm標準、積層0.20 mm、準備込み約1時間 |
+| クレードル一式の個別STL | [クレードル](STL/NC04_04_tab5_cradle.stl) ×1、[ガイド](STL/NC04_05_tab5_snap_guide.stl)・[軸受け](STL/NC04_09_hinge_snap_bearing.stl)・[軸ピン](STL/NC04_07_hinge_snap_pin.stl)・[Cクリップ](STL/NC04_08_hinge_c_clip.stl) 各×2 |
+| ライトカバー | [左](STL/NC04_06_light_left_diffuser.stl) · [右](STL/NC04_06_light_right_diffuser.stl) · [照明構成](LIGHTING.md) |
 
-全て新規造形する場合は 6 プレート（下ケース、上フレーム、天板、クレードルとガイド、脚、ライトカバー）を想定しています。本体と脚は PLA、ライトカバーは乳白・半透明 PLA です。NC-04 の STL は底面を造形面に向けて接地する向きで出力しています。チルト支持部の張り出しをおおむね45°以内の斜面にして、サポートなしでスライスできる形にしました。小径のねじ穴や GPIO 端子まわりには短いブリッジがあります。H3C の 0.4 mm ノズル設定で掲載した NC-04 造形部品がすべてサポート生成なし・プレート範囲内に収まることを確認しました。改訂した下ケースとクレードルの実機造形は未確認です。
+上フレームは造形完了を確認済みです。クレードル一式はH3Cで造形準備まで確認しました。下ケースの実機造形、クレードルの完成と嵌合、配線した状態でのチルトは未確認です。
 
-H3C・エンジニアリングプレート・白PLA・0.4 mmノズル・積層0.20 mmの同一設定では、上フレームの見積もりが **3時間49分12秒 → 3時間22分21秒**になりました。使用量は 126.51 g → 112.23 g です。
+### 組み立て
 
-H3C・0.4 mm・PLA、積層 0.28 mm、流量上限 12 mm³/s で比較しました。下ケースと天板を流用し、上下各3層・外壁145 mm/s・上面120 mm/s の試作設定で上フレーム、クレードル、スナップガイド、軸受け・軸ピン・C クリップを造形する場合、通常速度では合計 **3時間04分54秒**です。166% で単純換算すると約 **1時間51分**。166% での実測時間と造形品質は未確認です。
+1. 上フレーム左右の穴に軸受けを差し込みます。外すときは背面の解除窓から爪を押します。
+2. クレードルを軸受けの間に置き、左右から **Ø6 mmの軸ピン** を差してCクリップで抜け止めします。左右のスナップガイドを取り付けます。
+3. Tab5を上からガイドに差し込み、下端を受け棚に載せます。背面の純正M3インサート2か所へ、**M3 × 8 mmのステンレスねじと平ワッシャー** で固定します。ワッシャーの設計値は外径7 mm・厚さ0.5 mmです。ねじの底付きを現物で確認します。
+4. 天板は **M3 × 40 mmねじ4本** で、下ケース四隅のM3熱圧入インサートに固定します。
 
-### モデルの再生成
+Blenderのフレーム1〜3で、垂直から後方へ15°・30°・45°の姿勢を確認できます。45°ではTab5が筐体後端から約50 mm張り出します。 [Blenderモデル](NULL_CITY_NC04.blend) · [メーカーCAD](docs/references/tab5/) · [スナップ構造の参考](https://github.com/GOROman/stackchan-strider#組み立て)
+
+### NC-03から流用する
+
+レバー、ボタン、脚、前面ライトカバーを流用できます。既存の下ケースと天板で仮組みするなら、NC-04の上フレームとクレードル一式の2プレートから始められます。左右の照明帯を水平にそろえる場合は、NC-04の下ケースと左右カバーを使います。NC-03の下ケースにM3 × 40 mmねじを使う場合は、穴底までの深さを確認してください。 [NC-03の実機写真](docs/images/nc03-built.jpg) · [NC-03リポジトリ](https://github.com/GOROman/null-city)
+
+## 設計資料
+
+- **3Dビューアー** — 外観、分解、H3Cの造形配置を確認できます。Z／X／C／V／Bで視点、スペースで組立・分解を切り替えます。 [3Dビューアー](https://goroman.github.io/null-city-04/) · [操作と開発手順](web/README.md)
+- **部品と寸法** — [機構BOM](BOM.md) · [メーカー寸法図](docs/references/README.md) · [レバーの嵌合記録](docs/fit/README.md) · [開発日記](docs/development-diary.md)
+- **NC-03の製作データ** — [6プレート3MF](print/h3c/NC03_H3C_6plates_lighting_sliced.3mf) · [3色天板](print/h3c/PANEL_MULTICOLOR.md) · [デカールとカット手順](artwork/decal/README.md) · [試作基板のKiCadデータ](hardware/nc03-controller/README.md)
+- **NULL FONT** — [フォントパッケージ](fonts/null-font/) · [ベクターロゴ](artwork/logo/null-city.svg)
+
+NC-04のBlenderモデル、部品STL、レンダーはリポジトリ直下から再生成できます。
 
 ```sh
 blender --background --factory-startup --python-exit-code 1 --python NULL_CITY_NC04.py
 ```
 
-下記の製作データと印刷手順は NC-03 用です。NC-04 のブラケットとクレードルは造形前の検討段階です。
-
-## ベース設計 NC-03
-
-![NULL CITY NC-03 実機：白い筐体、紫のレバー、緑と透明のボタン、天板・前面デカール](docs/images/nc03-built.jpg)
-
-Bambu H3Cで製作する、交換式天板の6ボタンアーケードスティック。白い面取りケースに、NULL FONTのロゴとネイビー・マゼンタのデカールを組み合わせています。写真は2026-11-16の実機です。
-
-**[ブラウザーで3Dプレビュー ↗](https://goroman.github.io/null-city/)** · [制作日記・設計記録](docs/development-diary.md) · [部品表](BOM.md)
-
-## 仕様と構成
-
-| 項目 | 内容 |
-|---|---|
-| 外形 | 公称300 × 190 mm、脚込み高さ約55 mm（レバー・ボタンを除く） |
-| 筐体 | 下ケース・上フレーム・交換式天板。天板288 × 178 × 4 mm |
-| レバー | セイミツ製のゲーセンバッグ実物に合わせた直接固定。40 × 40 mmピッチ、逃げ穴φ4.5 mm × 4 |
-| ボタン | Blast City 1Pの6ボタン配列。メインφ30 × 6（緑3・透明3）、1P／STARTはφ24 |
-| 表示LED | レバー8方向＋各ボタン、計16個の4 × 4 mm角窓。裏面にWS2812互換モジュール用受け座 |
-| 筐体照明 | 前面・左右のLED収容溝と別体の乳白カバー |
-
-実機写真で筐体・天板・操作部・デカールの組立を確認できます。レバーは試験片でねじ4本の固定と8方向動作を確認済み。通信、LED点灯、接続済み配線の干渉、耐久性は引き続き確認が必要です。写真だけで電気的な動作確認済みとはしていません。
-
-## 製作データ
-
-| 作りたいもの | データ・手順 |
-|---|---|
-| 本体一式 | [H3C用6プレート3MF](print/h3c/NC03_H3C_6plates_lighting_sliced.3mf) ／ [造形設定](PRINT_SETTINGS.md) |
-| 天板 | [標準3MF](print/h3c/03_control_panel.3mf) ／ [時短試作3MF](print/h3c/03_control_panel_fast.3mf) |
-| 表面マルチカラー天板 | [3MF](print/h3c/03_control_panel_multicolor_sliced.3mf) ／ [3色印刷・角LED窓の手順](print/h3c/PANEL_MULTICOLOR.md) |
-| 下ケース・照明カバー | [下ケース時短3MF](print/h3c/01_lower_tray_fast.3mf) ／ [カバー3MF](print/h3c/06_light_diffusers.3mf) ／ [照明構成](LIGHTING.md) |
-| デカール | [全4枚をA4一枚に配置したPDF](artwork/decal/NC03_all_decals_A4_versioned.pdf) ／ [印刷・Bambu Suiteカット手順](artwork/decal/README.md) |
-| 部品の購入 | [機構BOM](BOM.md) ／ [CSV](BOM.csv) ／ [メーカー寸法図PDF](docs/references/README.md) |
-| 嵌合確認 | [レバー取付・測定](docs/fit/README.md) ／ [照明試験片](print/lighting-fit/README.md) |
-| コントローラー基板 | [KiCad設計・回路図・電子部品BOM](hardware/nc03-controller/README.md) |
-| NULL FONT | [フォントパッケージ](fonts/null-font/) ／ [ベクターロゴ](artwork/logo/null-city.svg) |
-
-マルチカラー天板は凹ロゴの底面だけ白、`///`をマゼンタにする一体造形です。写真のデカール仕上げとは別の仕上げ方法で、3色印刷・LED保持は実物確認待ちです。
-
-コントローラー基板はXIAO nRF52840 Plusを使うA0試作。USB／BLEの通信ファームウェア、Switch／PS互換性は未実装・未検証です。[基板の制約と対応範囲](hardware/nc03-controller/README.md)を確認してください。
-
-## 3Dプリント
-
-Bambu Studioの **H3C／0.4 mm Standard・Textured PEI Plate** を使用し、実際の材料と装着ノズルに合わせて再スライスします。
-
-| 設定 | 本体の標準試作 | 同梱6プレート版の時短試作 |
-|---|---|---|
-| 積層／初層 | 0.20／0.20 mm | 0.28／0.20 mm |
-| 壁 | 4周 | 3周 |
-| 上面／底面 | 各5層 | 各4層 |
-| 充填 | Gyroid 15% | Gyroid 10% |
-| ブリム | 外周5 mm、隙間0.15 mm | 同左 |
-| サポート | なし | なし |
-| 外壁／天面 | 100／80 mm/s | 同左 |
-
-PLAの開始値はノズル220℃、ベッド55℃、最大体積流量12 mm³/s。材料メーカーの指定を優先してください。脚は別プレートでTPU、カバーは半透明PLA。各専用ジョブの設定と見積は[PRINT_SETTINGS.md](PRINT_SETTINGS.md)を参照。
-
-## デカールの印刷とカット
-
-実機では天板・前面・左右の4枚を、[A4横一枚のベクターPDF](artwork/decal/NC03_all_decals_A4_versioned.pdf)から印刷しました。
-
-- Canon XK130、A4写真用紙 光沢ゴールド（GL-101）、後トレイ、高品質・カラー・片面。
-- 倍率100%、フチなしOFF、用紙に合わせるOFF。
-- [Suite用カットデータ](artwork/decal/NC03_all_decals_A4_CUT_ONLY_NOMINAL.lac)は33穴＋4外周の計37閉輪郭。用紙を貼るたびにカメラで位置・角度を合わせます。
-- 余白・塗り足しが必要な場合は[余白付きA4二枚版](artwork/decal/NC03_decals_A4_2sheets.pdf)を使用。
-
-材料設定、刃、位置合わせと試し切りの注意点は[デカールREADME](artwork/decal/README.md)にまとめています。
-
-## 設計図と3Dビューアー
-
-![上面・正面・右側面の三面図（Blenderレンダリング）](docs/images/three-views.jpg)
-
-[制作日記・設計記録](docs/development-diary.md)に、分解図・ワイヤーフレーム・照明構造・寸法・試作の経緯をまとめています。レンダリングの発光表現は完成イメージです。
-
-[PBR Webビューアー](https://goroman.github.io/null-city/)では回転・ズーム・分解表示、HDR IBL、SSAO、露出・背景色、RGB LEDアニメーション、レバーとボタンの操作を試せます。[ローカル実行・GitHub Pages公開手順](web/README.md)。
-
-## モデルと画像の再生成
-
-`NULL_CITY_NC03.blend` が組立モデル、`NULL_CITY_NC03.py` が生成スクリプト、`STL/` が部品別の造形データです。リポジトリ直下で実行します。
-
-```sh
-blender --background --factory-startup --python-exit-code 1 --python NULL_CITY_NC03.py
-python3 scripts/render_all.py
-```
-
-実機のトップ写真は `docs/images/nc03-built.jpg`。Blenderの再レンダリングでは更新されません。照明・デカールなどの生成手順は各リンク先を参照してください。
-
 ## ライセンス
 
-Copyright © 2026 GOROman。適用範囲は[LICENSE](LICENSE)を参照。
-
-| 対象 | ライセンス |
-|---|---|
-| スクリプト（フォントパッケージを除く） | [MIT](LICENSES/MIT.txt) |
-| 造形・デカール・オリジナル画像・設計設定・ドキュメント | [CC BY 4.0](LICENSES/CC-BY-4.0.txt) |
-| NULL FONT（字形ソース・生成スクリプトを含む） | [SIL OFL 1.1](fonts/null-font/OFL.txt) |
-
-メーカー寸法図など第三者資料は、それぞれの権利・ライセンスに従います。
+Copyright © 2026 GOROman。スクリプトは [MIT](LICENSES/MIT.txt)、造形データ・オリジナル画像・ドキュメントは [CC BY 4.0](LICENSES/CC-BY-4.0.txt)、NULL FONTは [SIL OFL 1.1](fonts/null-font/OFL.txt) です。メーカー資料など第三者素材の扱いは [LICENSE](LICENSE) を参照してください。
