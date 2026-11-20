@@ -92,8 +92,8 @@ public:
     }
 
     void resetRapidWaits() {
-        beforeGuardMs = 70;
-        afterGuardMs = 80;
+        beforeGuardMs = 116;
+        afterGuardMs = 33;
     }
 
     uint16_t rapidSequence(bool held, uint32_t now) {
@@ -103,7 +103,9 @@ public:
         }
         rapidHeld = held;
         if (!held) return 0;
-        const Step sequence[] = {{p, 100}, {k, 35}, {0, beforeGuardMs}, {g, 18}, {0, afterGuardMs}};
+        // Original at 60 Hz: P0, K3, G11 and repeat at P14.
+        const Step sequence[] = {{p, 17}, {0, 33}, {k, 17}, {0, beforeGuardMs},
+                                 {g, 17}, {0, afterGuardMs}};
         if (now - rapidSince >= sequence[rapidIndex].duration) {
             rapidSince = now;
             do {
@@ -126,7 +128,7 @@ private:
     };
     Move selected = Knee;
     bool playing = false, right = true, rapidHeld = false;
-    uint16_t beforeGuardMs = 70, afterGuardMs = 80;
+    uint16_t beforeGuardMs = 116, afterGuardMs = 33;
     uint8_t index = 0, rapidIndex = 0;
     uint32_t since = 0, rapidSince = 0;
 };

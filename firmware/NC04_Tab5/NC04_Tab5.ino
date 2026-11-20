@@ -408,7 +408,7 @@ void drawPkgTuning(const ControlsLayout &layout) {
         screen.setTextColor(0xe75d, 0x0842);
         screen.drawCenterString(duration, x + width / 2, row + (rowHeight - screen.fontHeight()) / 2);
     }
-    tile(x, layout.logFooterTop(), width, layout.logFooterHeight(), "RESET 70 80", false);
+    tile(x, layout.logFooterTop(), width, layout.logFooterHeight(), "RESET 116 33", false);
     screen.setTextSize(1);
     screen.endWrite();
 }

@@ -44,7 +44,7 @@ Tab5背面の30ピンM5-Busから、レバー4方向とG・P・K・COIN・1Pを�
 
 技プリセットは1回ずつ送ります。マクロ録画中は手動入力を記録します。独歩頂膝の最初の入力は約17 msです。技が成立するかはゲーム側の入力ポーリングや、対戦中の距離・タイミングにも依存します。 [セガのコマンド表（メガドライブ版）](https://vc.sega.jp/vc_vf2/w_akira.html)
 
-千本パンチの初期値はP 100 ms、K 35 ms、無入力70 ms、G 18 ms、無入力80 msの一周303 msです。調整値は再起動で初期値に戻ります。動画から各ボタンの正確な時刻は確認できず、ゲーム内での成立タイミングは未確認です。 [VF2.0 千本パンチ実演](https://www.youtube.com/watch?v=vesM_U9XENw) · [VF2 FAQ実演](https://www.youtube.com/watch?v=R-faQgcEC74) [セガ開発者インタビュー](https://www.sega.jp/fb/segavoice/041014/01_2.html) · [P→K→Gの解説](https://blog.ja.playstation.com/?p=50)
+千本パンチはVF2のVERSIONスイッチがOriginalの場合を想定しています。初期値はP 17 ms → 無入力33 ms → K 17 ms → 無入力116 ms → G 17 ms → 無入力33 msで、KはPから50 ms後、Gは183 ms後、周期は233 ms（60 Hzで約14フレーム）です。Version 2.1では同じタイミングで連続せず、Originalと同じガード不能のループにはなりません。調整値は再起動で初期値に戻ります。 [VF2の千本パンチ入力検証](https://gist.github.com/GOROman/fb6fde7e9d7dce3a8b15547e101c99bb)
 
 ## ビルド・書き込み
 
