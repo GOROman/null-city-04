@@ -92,7 +92,6 @@ BLEServer bleServer;
 BLECharacteristic bleInput;
 std::atomic<bool> bleEncrypted{false};
 Debouncer contacts;
-Macro macro;
 Presets presets;
 bool facingRight = true;
 bool rapidHeld = false;
@@ -187,9 +186,7 @@ struct ControlsLayout {
     int tuneRowHeight() const { return height * 9 / 100; }
     int tuneButtonWidth() const { return logWidth() * 30 / 100; }
     int presetTop() const { return height * 70 / 100; }
-    int presetHeight() const { return height * 12 / 100; }
-    int macroTop() const { return height * 84 / 100; }
-    int macroHeight() const { return height * 13 / 100; }
+    int presetHeight() const { return height * 27 / 100; }
     int presetAt(int x, int y) const {
         if (x < 0 || x >= controlsWidth() || y < presetTop() || y >= presetTop() + presetHeight()) return -1;
         return x * 5 / controlsWidth();
@@ -246,24 +243,13 @@ void touchSettings(int x, int y, const ControlsLayout &layout, uint32_t now) {
         }
         logNeedsDraw = true;
     } else if (const int preset = layout.presetAt(x, y); preset >= 0) {
-        if (preset < 2 && !macro.isRecording()) {
-            macro.cancel();
+        if (preset < 2) {
             presets.start(preset == 0 ? Presets::Knee : Presets::AkiraSpecial, facingRight, now);
         } else if (preset == 3) {
             facingRight = !facingRight;
         } else if (preset == 4) {
             tuningPkg = !tuningPkg;
             logNeedsDraw = true;
-        }
-    } else if (x < layout.controlsWidth() &&
-               y >= layout.macroTop() && y < layout.macroTop() + layout.macroHeight()) {
-        presets.cancel();
-        if (x < layout.controlsWidth() / 2) {
-            if (macro.isRecording()) macro.finish(now);
-            else macro.record(now);
-        } else {
-            if (macro.isPlaying()) macro.cancel();
-            else macro.play(now);
         }
     }
 }
@@ -277,8 +263,12 @@ uint16_t touchInputs(const ControlsLayout &layout, uint32_t now) {
     for (uint8_t i = 0; i < M5.Touch.getCount(); ++i) {
         const auto &finger = M5.Touch.getDetail(i);
         if (!finger.isPressed()) continue;
-        if (layout.presetAt(finger.base_x, finger.base_y) == 2 &&
-            layout.presetAt(finger.x, finger.y) == 2) rapidHeld = true;
+        const int preset = layout.presetAt(finger.base_x, finger.base_y);
+        if (preset >= 0) {
+            if (preset == 2 && layout.presetAt(finger.x, finger.y) == preset) rapidHeld = true;
+            if (finger.wasPressed()) touchSettings(finger.base_x, finger.base_y, layout, now);
+            continue;
+        }
         const int dx = finger.base_x - layout.stickX();
         const int dy = finger.base_y - layout.stickY();
         if (stickId < 0 && dx * dx + dy * dy <= radius * radius) stickId = finger.id;
@@ -495,11 +485,10 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
         screen.drawRightString("NULL CITY NC-04", w - 18, 17);
         screen.drawFastHLine(18, h * 12 / 100, w - 36, 0x32cc);
     }
-    if (first || (changed & 0x07ff0000)) {
+    if (first || (changed & (3u << 16))) {
         char status[70];
-        snprintf(status, sizeof(status), "USB %s    BLE %s    MACRO %02u",
-                 usbReady ? "ON" : "---", bleConnected ? "ON" : bleInput ? "ADV" : "ERR",
-                 static_cast<unsigned>(macro.size()));
+        snprintf(status, sizeof(status), "USB %s    BLE %s",
+                 usbReady ? "ON" : "---", bleConnected ? "ON" : bleInput ? "ADV" : "ERR");
         screen.fillRect(18, h * 14 / 100, w - 36, h * 6 / 100, 0x0842);
         screen.setFont(&bodyFont);
         screen.setTextColor(0x7dd9, 0x0842);
@@ -522,14 +511,6 @@ void draw(uint16_t inputs, bool usbReady, bool bleConnected, uint32_t changed, b
              facingRight ? "FACE RIGHT" : "FACE LEFT", false);
         tile(4 * tileWidth, layout.presetTop(), tileWidth, layout.presetHeight(), "PKG TUNE", tuningPkg);
         screen.setTextSize(1);
-    }
-    if (first || (changed & (1u << 18))) {
-        tile(0, layout.macroTop(), layout.controlsWidth() / 2, layout.macroHeight(), macro.isRecording() ? "STOP REC" : "RECORD",
-             macro.isRecording());
-    }
-    if (first || (changed & (1u << 19))) {
-        tile(layout.controlsWidth() / 2, layout.macroTop(), layout.controlsWidth() / 2, layout.macroHeight(), macro.isPlaying() ? "STOP PLAY" : "PLAY",
-             macro.isPlaying());
     }
     screen.endWrite();
 }
@@ -557,13 +538,10 @@ void loop() {
     M5.update();
     const ControlsLayout layout{M5.Display.width(), M5.Display.height()};
     const uint16_t inputs = touchInputs(layout, now) | readInputs(now);
-    const uint16_t rapidInput = presets.rapidSequence(rapidHeld && !macro.isRecording(), now);
-    if (rapidHeld && !macro.isRecording()) {
-        presets.cancel();
-        macro.cancel();
-    }
-    uint16_t output = presets.update(macro.update(inputs, now), now);
-    if (rapidHeld && !macro.isRecording()) {
+    const uint16_t rapidInput = presets.rapidSequence(rapidHeld, now);
+    if (rapidHeld) presets.cancel();
+    uint16_t output = presets.update(inputs, now);
+    if (rapidHeld) {
         constexpr uint16_t attackButtons = inputBit(Punch) | inputBit(Kick) | inputBit(Guard);
         output = (output & ~attackButtons) | rapidInput;
     }
@@ -597,9 +575,6 @@ void loop() {
 
     const uint32_t visual = output |
                             (usbReady ? 1u << 16 : 0) | (bleConnected ? 1u << 17 : 0) |
-                            (macro.isRecording() ? 1u << 18 : 0) |
-                            (macro.isPlaying() ? 1u << 19 : 0) |
-                            (static_cast<uint32_t>(macro.size()) << 20) |
                             (facingRight ? 1u << 27 : 0) | (rapidHeld ? 1u << 28 : 0) |
                             (tuningPkg ? 1u << 29 : 0);
     const uint32_t frameTime = micros();

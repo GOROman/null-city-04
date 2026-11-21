@@ -64,7 +64,7 @@ export function drawTab5(ctx, {buttons = [], x = 0, y = 0, log = []} = {}) {
   text('INTELLIGENT STICK',18,39,48,c.accent);
   text('NULL CITY NC-04',width-18,32,28,c.text,'right');
   fill(18,86,width-36,1,c.stroke);
-  text('USB ---    BLE ---    MACRO 00',18,115,28,c.muted);
+  text('USB ---    BLE ---',18,115,28,c.muted);
 
   const sx=Math.floor(controls*.22), sy=top+158, radius=152;
   circle(sx,sy,radius,c.panel,c.stroke);
@@ -85,8 +85,7 @@ export function drawTab5(ctx, {buttons = [], x = 0, y = 0, log = []} = {}) {
     text(name,bx,by,28,active?c.background:c.text,'center');
   });
 
-  ['DOPPO','AKIRA SPECIAL','1000 PUNCH','FACE RIGHT','PKG TUNE'].forEach((label,i)=>tile(label,i*197,504,197,86,22));
-  ['RECORD','PLAY'].forEach((label,i)=>tile(label,i*494,604,494,93,28));
+  ['DOPPO','AKIRA SPECIAL','1000 PUNCH','FACE RIGHT','PKG TUNE'].forEach((label,i)=>tile(label,i*197,504,197,194,22));
   fill(logLeft-9,top,1,547,c.stroke);
   text('INPUT LOG',logLeft+2,top+13,24,c.muted);
   text('LIVE',width-23,top+15,15,c.muted,'right');
